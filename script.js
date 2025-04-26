@@ -824,7 +824,7 @@ dagre.layout(g);
                     node.append('ellipse')
                         .attr('cx', d.width / 2)
                         .attr('cy', d.height / 2)
-                        .attr('rx', d.width / 2)
+    .attr('rx', d.width / 2)
                         .attr('ry', d.height / 2)
                         .attr('fill', fillColor)
                         .attr('stroke', strokeColor)
@@ -1224,33 +1224,64 @@ edges.append('path')
     // Export functions
     exportSvgBtn.addEventListener('click', function() {
         const svgElement = document.getElementById('graph');
-        
+
         // Clone the SVG to avoid modifying the original
         const svgClone = svgElement.cloneNode(true);
-        
-        // Add inline CSS to ensure styles are preserved in the export
+
+        // --- Adjust the inline CSS for export ---
+        // We rely more on the inline styles set during rendering,
+        // but this CSS provides fallbacks and defines general structure.
         const style = document.createElement('style');
         style.textContent = `
+            /* Define basic node shape stroke width */
             .node rect, .node ellipse, .node path {
-                stroke: ${state.settings.nodeStrokeColor};
-                stroke-width: ${state.settings.nodeStrokeWidth}px;
+                /* Stroke color is applied inline per shape */
+                stroke-width: ${state.settings.nodeStrokeWidth || 1.5}px;
+                /* Fill color is applied inline per shape */
             }
+
+            /* Node text styles (font applied inline, color applied inline per shape) */
+            /* We can define the base font here as a fallback */
             .node text {
-                font-size: 14px;
-                fill: ${state.settings.nodeTextColor};
+                 font-family: ${state.settings.nodeFontFamily || 'Arial, sans-serif'};
+                 font-size: ${(state.settings.nodeFontSize || 14)}px;
+                 /* Fill color is applied inline per shape */
+                 text-anchor: middle;
+                 dominant-baseline: middle;
             }
+
+            /* Edge path styles */
             .edge path {
-                stroke-width: ${state.settings.edgeWidth}px;
+                stroke: ${state.settings.edgeColor || '#333333'};
+                stroke-width: ${state.settings.edgeWidth || 1.5}px;
                 fill: none;
+                /* marker-end is applied inline */
             }
+
+            /* Edge label styles */
             .edge-label {
-                font-size: 12px;
+                font-family: ${state.settings.edgeFontFamily || 'Arial, sans-serif'};
+                font-size: ${(state.settings.edgeFontSize || 12)}px;
+                fill: ${state.settings.edgeTextColor || '#000000'};
                 text-anchor: middle;
-                fill: ${state.settings.edgeTextColor};
+                dominant-baseline: middle;
+            }
+
+            /* Arrowhead style */
+            #arrowhead path {
+                 fill: ${state.settings.edgeColor || '#333333'};
+                 stroke: none;
             }
         `;
+        // Prepend the style block
         svgClone.insertBefore(style, svgClone.firstChild);
-        
+        // --- End of CSS adjustment ---
+
+        // Add XML namespace attributes for better compatibility
+        svgClone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+        svgClone.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
+
+
         const svgData = new XMLSerializer().serializeToString(svgClone);
         const blob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'});
         saveAs(blob, 'graph.svg');
@@ -1258,25 +1289,105 @@ edges.append('path')
 
     exportPngBtn.addEventListener('click', function() {
         const svgElement = document.getElementById('graph');
-        const svgData = new XMLSerializer().serializeToString(svgElement);
-        
+
+        // --- Clone and add styles for PNG export consistency ---
+        const svgClone = svgElement.cloneNode(true);
+        const style = document.createElement('style');
+         style.textContent = `
+            /* Define basic node shape stroke width */
+            .node rect, .node ellipse, .node path {
+                stroke-width: ${state.settings.nodeStrokeWidth || 1.5}px;
+            }
+            /* Node text styles */
+            .node text {
+                 font-family: ${state.settings.nodeFontFamily || 'Arial, sans-serif'};
+                 font-size: ${(state.settings.nodeFontSize || 14)}px;
+                 text-anchor: middle;
+                 dominant-baseline: middle;
+            }
+            /* Edge path styles */
+            .edge path {
+                stroke: ${state.settings.edgeColor || '#333333'};
+                stroke-width: ${state.settings.edgeWidth || 1.5}px;
+                fill: none;
+            }
+            /* Edge label styles */
+            .edge-label {
+                font-family: ${state.settings.edgeFontFamily || 'Arial, sans-serif'};
+                font-size: ${(state.settings.edgeFontSize || 12)}px;
+                fill: ${state.settings.edgeTextColor || '#000000'};
+                text-anchor: middle;
+                dominant-baseline: middle;
+            }
+            /* Arrowhead style */
+            #arrowhead path {
+                 fill: ${state.settings.edgeColor || '#333333'};
+                 stroke: none;
+            }
+        `;
+        svgClone.insertBefore(style, svgClone.firstChild);
+        svgClone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+        svgClone.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
+        // --- End clone and style ---
+
+        const svgData = new XMLSerializer().serializeToString(svgClone); // Use the styled clone
+
         // Create a canvas element
         const canvas = document.createElement('canvas');
-        const svgSize = svgElement.getBoundingClientRect();
-        canvas.width = svgSize.width;
-        canvas.height = svgSize.height;
+        const viewBox = svgClone.getAttribute('viewBox');
+        let svgWidth, svgHeight;
+        if (viewBox) {
+            const parts = viewBox.split(' ');
+            svgWidth = parseFloat(parts[2]);
+            svgHeight = parseFloat(parts[3]);
+        } else {
+            const svgSize = svgElement.getBoundingClientRect(); // Fallback
+            svgWidth = svgSize.width;
+            svgHeight = svgSize.height;
+        }
+        const scale = 2;
+        canvas.width = svgWidth * scale;
+        canvas.height = svgHeight * scale;
         const ctx = canvas.getContext('2d');
-        
+        ctx.scale(scale, scale);
+
         // Create an image from the SVG data
         const img = new Image();
+        const blob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'});
+        const url = URL.createObjectURL(blob);
+
+        // --- Corrected onload and onerror handlers ---
         img.onload = function() {
-            ctx.drawImage(img, 0, 0);
-            canvas.toBlob(function(blob) {
-                saveAs(blob, 'graph.png');
-            });
+            try {
+                ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas
+                // Optional: Draw a white background if needed
+                // ctx.fillStyle = "#ffffff";
+                // ctx.fillRect(0, 0, canvas.width / scale, canvas.height / scale);
+                ctx.drawImage(img, 0, 0, svgWidth, svgHeight); // Draw image respecting original size
+                canvas.toBlob(function(pngBlob) {
+                    if (pngBlob) {
+                        saveAs(pngBlob, 'graph.png');
+                    } else {
+                         console.error("Canvas toBlob resulted in null.");
+                         alert("Error exporting PNG: Failed to create PNG data.");
+                    }
+                }, 'image/png'); // Specify PNG format
+            } catch (drawError) {
+                 console.error("Error during canvas drawing or blob creation:", drawError);
+                 alert("Error exporting PNG: Failed during image processing.");
+            } finally {
+                URL.revokeObjectURL(url); // Clean up Blob URL here
+            }
         };
-        
-        img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+
+        img.onerror = function(e) {
+            console.error("Error loading SVG into image for PNG export:", e);
+            alert("Error exporting PNG. Could not load SVG image.");
+            URL.revokeObjectURL(url); // Clean up Blob URL here too
+        }
+        // --- End corrected handlers ---
+
+        img.src = url; // Set the source AFTER defining onload/onerror
     });
 
     // Export project function
