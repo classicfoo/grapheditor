@@ -410,13 +410,17 @@ document.addEventListener('DOMContentLoaded', function() {
                         .attr('cy', d.height / 2)
                         .attr('rx', d.width / 2)
                         .attr('ry', d.height / 2)
-                        .attr('fill', state.settings.nodeColor);
+                        .attr('fill', state.settings.nodeColor)
+                        .attr('stroke', '#333')
+                        .attr('stroke-width', '1.5px');
                     break;
                 
                 case 'diamond':
                     node.append('path')
                         .attr('d', diamondPath(d.width, d.height))
-                        .attr('fill', state.settings.nodeColor);
+                        .attr('fill', state.settings.nodeColor)
+                        .attr('stroke', '#333')
+                        .attr('stroke-width', '1.5px');
                     break;
                 
                 case 'rect':
@@ -426,7 +430,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         .attr('height', d.height)
                         .attr('rx', 5)
                         .attr('ry', 5)
-                        .attr('fill', state.settings.nodeColor);
+                        .attr('fill', state.settings.nodeColor)
+                        .attr('stroke', '#333')
+                        .attr('stroke-width', '1.5px');
                     break;
             }
         });
