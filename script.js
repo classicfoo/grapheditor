@@ -24,7 +24,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const edgeTbody = document.getElementById('edge-tbody');
     const addNodeBtn = document.getElementById('add-node');
     const addEdgeBtn = document.getElementById('add-edge');
-    const generateGraphBtn = document.getElementById('generate-graph');
     const exportSvgBtn = document.getElementById('export-svg');
     const exportPngBtn = document.getElementById('export-png');
     const rankdirSelect = document.getElementById('rankdir');
@@ -63,6 +62,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 state.nodes[index].id = newId;
                 renderEdgeTable(); // Refresh edge table to show updated IDs
+                generateGraph(); // Regenerate graph when node ID changes
             });
         });
 
@@ -70,6 +70,7 @@ document.addEventListener('DOMContentLoaded', function() {
             input.addEventListener('change', function() {
                 const index = parseInt(this.dataset.index);
                 state.nodes[index].label = this.value;
+                generateGraph(); // Regenerate graph when node label changes
             });
         });
 
@@ -77,6 +78,7 @@ document.addEventListener('DOMContentLoaded', function() {
             input.addEventListener('change', function() {
                 const index = parseInt(this.dataset.index);
                 state.nodes[index].width = parseInt(this.value);
+                generateGraph(); // Regenerate graph when node width changes
             });
         });
 
@@ -84,6 +86,7 @@ document.addEventListener('DOMContentLoaded', function() {
             input.addEventListener('change', function() {
                 const index = parseInt(this.dataset.index);
                 state.nodes[index].height = parseInt(this.value);
+                generateGraph(); // Regenerate graph when node height changes
             });
         });
 
@@ -102,6 +105,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 renderNodeTable();
                 renderEdgeTable();
+                generateGraph(); // Regenerate graph when node is deleted
             });
         });
     }
@@ -147,6 +151,7 @@ document.addEventListener('DOMContentLoaded', function() {
             select.addEventListener('change', function() {
                 const index = parseInt(this.dataset.index);
                 state.edges[index].source = this.value;
+                generateGraph(); // Regenerate graph when edge source changes
             });
         });
 
@@ -154,6 +159,7 @@ document.addEventListener('DOMContentLoaded', function() {
             select.addEventListener('change', function() {
                 const index = parseInt(this.dataset.index);
                 state.edges[index].target = this.value;
+                generateGraph(); // Regenerate graph when edge target changes
             });
         });
 
@@ -161,6 +167,7 @@ document.addEventListener('DOMContentLoaded', function() {
             input.addEventListener('change', function() {
                 const index = parseInt(this.dataset.index);
                 state.edges[index].label = this.value;
+                generateGraph(); // Regenerate graph when edge label changes
             });
         });
 
@@ -169,6 +176,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const index = parseInt(this.dataset.index);
                 state.edges.splice(index, 1);
                 renderEdgeTable();
+                generateGraph(); // Regenerate graph when edge is deleted
             });
         });
     }
@@ -189,6 +197,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         renderNodeTable();
+        generateGraph(); // Regenerate graph when new node is added
     });
 
     // Add new edge
@@ -205,27 +214,33 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         renderEdgeTable();
+        generateGraph(); // Regenerate graph when new edge is added
     });
 
     // Update settings
     rankdirSelect.addEventListener('change', function() {
         state.settings.rankdir = this.value;
+        generateGraph(); // Regenerate graph when direction changes
     });
 
     nodesepInput.addEventListener('change', function() {
         state.settings.nodesep = parseInt(this.value);
+        generateGraph(); // Regenerate graph when node separation changes
     });
 
     ranksepInput.addEventListener('change', function() {
         state.settings.ranksep = parseInt(this.value);
+        generateGraph(); // Regenerate graph when rank separation changes
     });
 
     nodeColorInput.addEventListener('change', function() {
         state.settings.nodeColor = this.value;
+        generateGraph(); // Regenerate graph when node color changes
     });
 
     edgeColorInput.addEventListener('change', function() {
         state.settings.edgeColor = this.value;
+        generateGraph(); // Regenerate graph when edge color changes
     });
 
     // Generate graph
@@ -407,7 +422,5 @@ document.addEventListener('DOMContentLoaded', function() {
     renderNodeTable();
     renderEdgeTable();
     
-    // Generate initial graph
-    generateGraphBtn.addEventListener('click', generateGraph);
     generateGraph(); // Generate graph on load
 });
