@@ -197,6 +197,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         renderNodeTable();
+        renderEdgeTable();
         generateGraph(); // Regenerate graph when new node is added
     });
 
