@@ -283,15 +283,58 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
+        // Find the most recent node that has connections (either incoming or outgoing)
+        let sourceNode = null;
+        for (let i = state.nodes.length - 1; i >= 0; i--) {
+            const nodeId = state.nodes[i].id;
+            const hasConnections = state.edges.some(edge => 
+                edge.source === nodeId || edge.target === nodeId
+            );
+            if (hasConnections) {
+                sourceNode = nodeId;
+                break;
+            }
+        }
+        
+        // If no connected node found, use the second-to-last node
+        if (!sourceNode && state.nodes.length > 1) {
+            sourceNode = state.nodes[state.nodes.length - 2].id;
+        } else if (!sourceNode) {
+            // Fallback to first node if needed
+            sourceNode = state.nodes[0].id;
+        }
+        
+        // Find the most recent orphan node (no incoming edges)
+        let targetNode = null;
+        for (let i = state.nodes.length - 1; i >= 0; i--) {
+            const nodeId = state.nodes[i].id;
+            const hasIncomingEdges = state.edges.some(edge => edge.target === nodeId);
+            if (!hasIncomingEdges && nodeId !== sourceNode) {
+                targetNode = nodeId;
+                break;
+            }
+        }
+        
+        // If no orphan found or it's the same as source, use the most recent node
+        // that's not the source
+        if (!targetNode || targetNode === sourceNode) {
+            for (let i = state.nodes.length - 1; i >= 0; i--) {
+                if (state.nodes[i].id !== sourceNode) {
+                    targetNode = state.nodes[i].id;
+                    break;
+                }
+            }
+        }
+        
         state.edges.push({
-            source: state.nodes[0].id,
-            target: state.nodes[1].id,
+            source: sourceNode,
+            target: targetNode,
             label: ''
         });
         
         renderEdgeTable();
-        generateGraph(); // Regenerate graph when new edge is added
-        saveToLocalStorage(); // Save changes to local storage
+        generateGraph();
+        saveToLocalStorage();
     });
 
     // Update settings
@@ -327,11 +370,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Generate graph
     function generateGraph() {
-        // Create a new directed graph
+// Create a new directed graph
         const g = new dagre.graphlib.Graph();
 
         // Set graph settings
-        g.setGraph({
+g.setGraph({
             rankdir: state.settings.rankdir,
             nodesep: state.settings.nodesep,
             ranksep: state.settings.ranksep,
@@ -340,10 +383,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         // Set default node and edge labels
-        g.setDefaultNodeLabel(() => ({}));
+g.setDefaultNodeLabel(() => ({}));
         g.setDefaultEdgeLabel(() => ({}));
 
-        // Add nodes to the graph
+// Add nodes to the graph
         state.nodes.forEach(node => {
             g.setNode(node.id, {
                 label: node.label,
@@ -353,15 +396,15 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
 
-        // Add edges to the graph
+// Add edges to the graph
         state.edges.forEach(edge => {
             g.setEdge(edge.source, edge.target, {
                 label: edge.label
             });
         });
 
-        // Run the layout algorithm
-        dagre.layout(g);
+// Run the layout algorithm
+dagre.layout(g);
 
         // Render the graph
         renderSvgGraph(g);
@@ -379,8 +422,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Set SVG dimensions with some padding
         svg.attr('viewBox', `0 0 ${graphWidth + 40} ${graphHeight + 40}`);
-        
-        // Create a group for the graph
+
+// Create a group for the graph
         const svgGroup = svg.append('g')
             .attr('transform', 'translate(20, 20)');
         
@@ -389,8 +432,8 @@ document.addEventListener('DOMContentLoaded', function() {
             .data(g.nodes().map(v => {
                 return { id: v, ...g.node(v) };
             }))
-            .enter()
-            .append('g')
+    .enter()
+    .append('g')
             .attr('class', 'node')
             .attr('transform', d => `translate(${d.x - d.width/2}, ${d.y - d.height/2})`);
         
@@ -438,13 +481,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         // Add text labels to nodes
-        nodes.append('text')
+nodes.append('text')
             .attr('x', d => d.width / 2)
             .attr('y', d => d.height / 2)
-            .attr('text-anchor', 'middle')
+    .attr('text-anchor', 'middle')
             .attr('dominant-baseline', 'middle')
-            .text(d => d.label);
-        
+    .text(d => d.label);
+
         // Function to adjust edge endpoints based on node shape
         function adjustEdgeEndpoints(points, sourceNode, targetNode) {
             if (!points || points.length < 2) return points;
@@ -731,12 +774,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     label: edgeData.label
                 };
             }))
-            .enter()
-            .append('g')
-            .attr('class', 'edge');
-        
-        edges.append('path')
-            .attr('d', d => {
+    .enter()
+    .append('g')
+    .attr('class', 'edge');
+
+edges.append('path')
+    .attr('d', d => {
                 let path = '';
                 const points = d.points;
                 
@@ -764,7 +807,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return (points[midIndex-1].x + points[midIndex].x) / 2;
             })
             .attr('y', d => {
-                const points = d.points;
+        const points = d.points;
                 const midIndex = Math.floor(points.length / 2);
                 return (points[midIndex-1].y + points[midIndex].y) / 2;
             })
@@ -926,4 +969,4 @@ document.addEventListener('DOMContentLoaded', function() {
     renderEdgeTable();
     
     generateGraph(); // Generate graph on load
-});
+    });
