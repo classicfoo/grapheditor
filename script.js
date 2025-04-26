@@ -11,11 +11,21 @@ document.addEventListener('DOMContentLoaded', function() {
             { source: 'A', target: 'C', label: 'Edge 2' }
         ],
         settings: {
+            // Layout settings
             rankdir: 'TB',
             nodesep: 50,
             ranksep: 50,
+            
+            // Node appearance
             nodeColor: '#ffffff',
-            edgeColor: '#333333'
+            nodeTextColor: '#000000',
+            nodeStrokeColor: '#333333',
+            nodeStrokeWidth: 1.5,
+            
+            // Edge appearance
+            edgeColor: '#333333',
+            edgeTextColor: '#000000',
+            edgeWidth: 1.5
         }
     };
 
@@ -32,8 +42,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     rankdirSelect.value = state.settings.rankdir;
                     nodesepInput.value = state.settings.nodesep;
                     ranksepInput.value = state.settings.ranksep;
+                    
+                    // Node appearance
                     nodeColorInput.value = state.settings.nodeColor;
+                    nodeTextColorInput.value = state.settings.nodeTextColor || '#000000';
+                    nodeStrokeColorInput.value = state.settings.nodeStrokeColor || '#333333';
+                    nodeStrokeWidthInput.value = state.settings.nodeStrokeWidth || 1.5;
+                    
+                    // Edge appearance
                     edgeColorInput.value = state.settings.edgeColor;
+                    edgeTextColorInput.value = state.settings.edgeTextColor || '#000000';
+                    edgeWidthInput.value = state.settings.edgeWidth || 1.5;
                     
                     console.log('State loaded from local storage');
                 }
@@ -66,6 +85,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const edgeColorInput = document.getElementById('edge-color');
     const exportProjectBtn = document.getElementById('export-project');
     const importProjectInput = document.getElementById('import-project');
+    const nodeTextColorInput = document.getElementById('node-text-color');
+    const nodeStrokeColorInput = document.getElementById('node-stroke-color');
+    const nodeStrokeWidthInput = document.getElementById('node-stroke-width');
+    const edgeTextColorInput = document.getElementById('edge-text-color');
+    const edgeWidthInput = document.getElementById('edge-width');
 
     // Initialize tables
     function renderNodeTable() {
@@ -399,13 +423,43 @@ document.addEventListener('DOMContentLoaded', function() {
         saveToLocalStorage(); // Save changes to local storage
     });
 
+    nodeTextColorInput.addEventListener('change', function() {
+        state.settings.nodeTextColor = this.value;
+        generateGraph();
+        saveToLocalStorage();
+    });
+
+    nodeStrokeColorInput.addEventListener('change', function() {
+        state.settings.nodeStrokeColor = this.value;
+        generateGraph();
+        saveToLocalStorage();
+    });
+
+    nodeStrokeWidthInput.addEventListener('change', function() {
+        state.settings.nodeStrokeWidth = parseFloat(this.value);
+        generateGraph();
+        saveToLocalStorage();
+    });
+
+    edgeTextColorInput.addEventListener('change', function() {
+        state.settings.edgeTextColor = this.value;
+        generateGraph();
+        saveToLocalStorage();
+    });
+
+    edgeWidthInput.addEventListener('change', function() {
+        state.settings.edgeWidth = parseFloat(this.value);
+        generateGraph();
+        saveToLocalStorage();
+    });
+
     // Generate graph
     function generateGraph() {
-// Create a new directed graph
+        // Create a new directed graph
         const g = new dagre.graphlib.Graph();
 
         // Set graph settings
-g.setGraph({
+        g.setGraph({
             rankdir: state.settings.rankdir,
             nodesep: state.settings.nodesep,
             ranksep: state.settings.ranksep,
@@ -414,10 +468,10 @@ g.setGraph({
         });
 
         // Set default node and edge labels
-g.setDefaultNodeLabel(() => ({}));
+        g.setDefaultNodeLabel(() => ({}));
         g.setDefaultEdgeLabel(() => ({}));
 
-// Add nodes to the graph
+        // Add nodes to the graph
         state.nodes.forEach(node => {
             g.setNode(node.id, {
                 label: node.label,
@@ -427,15 +481,15 @@ g.setDefaultNodeLabel(() => ({}));
             });
         });
 
-// Add edges to the graph
+        // Add edges to the graph
         state.edges.forEach(edge => {
             g.setEdge(edge.source, edge.target, {
                 label: edge.label
             });
         });
 
-// Run the layout algorithm
-dagre.layout(g);
+        // Run the layout algorithm
+        dagre.layout(g);
 
         // Render the graph
         renderSvgGraph(g);
@@ -454,7 +508,7 @@ dagre.layout(g);
         // Set SVG dimensions with some padding
         svg.attr('viewBox', `0 0 ${graphWidth + 40} ${graphHeight + 40}`);
 
-// Create a group for the graph
+        // Create a group for the graph
         const svgGroup = svg.append('g')
             .attr('transform', 'translate(20, 20)');
         
@@ -463,8 +517,8 @@ dagre.layout(g);
             .data(g.nodes().map(v => {
                 return { id: v, ...g.node(v) };
             }))
-    .enter()
-    .append('g')
+            .enter()
+            .append('g')
             .attr('class', 'node')
             .attr('transform', d => `translate(${d.x - d.width/2}, ${d.y - d.height/2})`);
         
@@ -473,7 +527,7 @@ dagre.layout(g);
             return `M${width/2},0 L${width},${height/2} L${width/2},${height} L0,${height/2} Z`;
         }
         
-        // Add the appropriate shape based on node.shape
+        // Add the appropriate shape based on node.shape with updated styling
         nodes.each(function(d) {
             const node = d3.select(this);
             
@@ -485,16 +539,16 @@ dagre.layout(g);
                         .attr('rx', d.width / 2)
                         .attr('ry', d.height / 2)
                         .attr('fill', state.settings.nodeColor)
-                        .attr('stroke', '#333')
-                        .attr('stroke-width', '1.5px');
+                        .attr('stroke', state.settings.nodeStrokeColor)
+                        .attr('stroke-width', state.settings.nodeStrokeWidth);
                     break;
                 
                 case 'diamond':
                     node.append('path')
                         .attr('d', diamondPath(d.width, d.height))
                         .attr('fill', state.settings.nodeColor)
-                        .attr('stroke', '#333')
-                        .attr('stroke-width', '1.5px');
+                        .attr('stroke', state.settings.nodeStrokeColor)
+                        .attr('stroke-width', state.settings.nodeStrokeWidth);
                     break;
                 
                 case 'rect':
@@ -505,19 +559,20 @@ dagre.layout(g);
                         .attr('rx', 5)
                         .attr('ry', 5)
                         .attr('fill', state.settings.nodeColor)
-                        .attr('stroke', '#333')
-                        .attr('stroke-width', '1.5px');
+                        .attr('stroke', state.settings.nodeStrokeColor)
+                        .attr('stroke-width', state.settings.nodeStrokeWidth);
                     break;
             }
         });
         
-        // Add text labels to nodes
-nodes.append('text')
+        // Add text labels to nodes with node text color
+        nodes.append('text')
             .attr('x', d => d.width / 2)
             .attr('y', d => d.height / 2)
-    .attr('text-anchor', 'middle')
+            .attr('text-anchor', 'middle')
             .attr('dominant-baseline', 'middle')
-    .text(d => d.label);
+            .attr('fill', state.settings.nodeTextColor)
+            .text(d => d.label);
 
         // Function to adjust edge endpoints based on node shape
         function adjustEdgeEndpoints(points, sourceNode, targetNode) {
@@ -805,12 +860,12 @@ nodes.append('text')
                     label: edgeData.label
                 };
             }))
-    .enter()
-    .append('g')
-    .attr('class', 'edge');
+            .enter()
+            .append('g')
+            .attr('class', 'edge');
 
-edges.append('path')
-    .attr('d', d => {
+        edges.append('path')
+            .attr('d', d => {
                 let path = '';
                 const points = d.points;
                 
@@ -824,10 +879,11 @@ edges.append('path')
                 return path;
             })
             .attr('stroke', state.settings.edgeColor)
+            .attr('stroke-width', state.settings.edgeWidth)
             .attr('marker-end', 'url(#arrowhead)')
             .attr('fill', 'none');
         
-        // Add edge labels
+        // Add edge labels with edge text color
         edges.filter(d => d.label)
             .append('text')
             .attr('class', 'edge-label')
@@ -838,14 +894,14 @@ edges.append('path')
                 return (points[midIndex-1].x + points[midIndex].x) / 2;
             })
             .attr('y', d => {
-        const points = d.points;
+                const points = d.points;
                 const midIndex = Math.floor(points.length / 2);
                 return (points[midIndex-1].y + points[midIndex].y) / 2;
             })
-            .attr('dy', 0) // Remove the vertical offset
-            .attr('text-anchor', 'middle') // Center horizontally
-            .attr('dominant-baseline', 'middle') // Center vertically
-            .attr('fill', '#000')
+            .attr('dy', 0)
+            .attr('text-anchor', 'middle')
+            .attr('dominant-baseline', 'middle')
+            .attr('fill', state.settings.edgeTextColor)
             .text(d => d.label);
         
         // Add arrowhead marker
@@ -873,20 +929,22 @@ edges.append('path')
         // Add inline CSS to ensure styles are preserved in the export
         const style = document.createElement('style');
         style.textContent = `
-            .node rect {
-                stroke: #333;
-                stroke-width: 1.5px;
+            .node rect, .node ellipse, .node path {
+                stroke: ${state.settings.nodeStrokeColor};
+                stroke-width: ${state.settings.nodeStrokeWidth}px;
             }
             .node text {
                 font-size: 14px;
+                fill: ${state.settings.nodeTextColor};
             }
             .edge path {
-                stroke-width: 1.5px;
+                stroke-width: ${state.settings.edgeWidth}px;
                 fill: none;
             }
             .edge-label {
                 font-size: 12px;
                 text-anchor: middle;
+                fill: ${state.settings.edgeTextColor};
             }
         `;
         svgClone.insertBefore(style, svgClone.firstChild);
@@ -962,6 +1020,11 @@ edges.append('path')
                 ranksepInput.value = state.settings.ranksep;
                 nodeColorInput.value = state.settings.nodeColor;
                 edgeColorInput.value = state.settings.edgeColor;
+                nodeTextColorInput.value = state.settings.nodeTextColor || '#000000';
+                nodeStrokeColorInput.value = state.settings.nodeStrokeColor || '#333333';
+                nodeStrokeWidthInput.value = state.settings.nodeStrokeWidth || 1.5;
+                edgeTextColorInput.value = state.settings.edgeTextColor || '#000000';
+                edgeWidthInput.value = state.settings.edgeWidth || 1.5;
                 
                 // Refresh the tables and graph
                 renderNodeTable();
@@ -1000,4 +1063,4 @@ edges.append('path')
     renderEdgeTable();
     
     generateGraph(); // Generate graph on load
-    });
+});

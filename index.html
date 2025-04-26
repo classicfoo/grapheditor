@@ -63,30 +63,62 @@
 
             <div class="settings-container">
                 <h2>Graph Settings</h2>
-                <div class="setting">
-                    <label for="rankdir">Direction:</label>
-                    <select id="rankdir">
-                        <option value="TB" selected>Top to Bottom</option>
-                        <option value="BT">Bottom to Top</option>
-                        <option value="LR">Left to Right</option>
-                        <option value="RL">Right to Left</option>
-                    </select>
+                
+                <div class="setting-group">
+                    <h3>Layout</h3>
+                    <div class="setting">
+                        <label for="rankdir">Direction:</label>
+                        <select id="rankdir">
+                            <option value="TB" selected>Top to Bottom</option>
+                            <option value="BT">Bottom to Top</option>
+                            <option value="LR">Left to Right</option>
+                            <option value="RL">Right to Left</option>
+                        </select>
+                    </div>
+                    <div class="setting">
+                        <label for="nodesep">Node Separation:</label>
+                        <input type="number" id="nodesep" value="50" min="10" max="200">
+                    </div>
+                    <div class="setting">
+                        <label for="ranksep">Rank Separation:</label>
+                        <input type="number" id="ranksep" value="50" min="10" max="200">
+                    </div>
                 </div>
-                <div class="setting">
-                    <label for="nodesep">Node Separation:</label>
-                    <input type="number" id="nodesep" value="50" min="10" max="200">
+                
+                <div class="setting-group">
+                    <h3>Node Appearance</h3>
+                    <div class="setting">
+                        <label for="node-color">Fill Color:</label>
+                        <input type="color" id="node-color" value="#ffffff">
+                    </div>
+                    <div class="setting">
+                        <label for="node-text-color">Text Color:</label>
+                        <input type="color" id="node-text-color" value="#000000">
+                    </div>
+                    <div class="setting">
+                        <label for="node-stroke-color">Border Color:</label>
+                        <input type="color" id="node-stroke-color" value="#333333">
+                    </div>
+                    <div class="setting">
+                        <label for="node-stroke-width">Border Width:</label>
+                        <input type="number" id="node-stroke-width" value="1.5" min="0" max="5" step="0.5">
+                    </div>
                 </div>
-                <div class="setting">
-                    <label for="ranksep">Rank Separation:</label>
-                    <input type="number" id="ranksep" value="50" min="10" max="200">
-                </div>
-                <div class="setting">
-                    <label for="node-color">Node Color:</label>
-                    <input type="color" id="node-color" value="#ffffff">
-                </div>
-                <div class="setting">
-                    <label for="edge-color">Edge Color:</label>
-                    <input type="color" id="edge-color" value="#333333">
+                
+                <div class="setting-group">
+                    <h3>Edge Appearance</h3>
+                    <div class="setting">
+                        <label for="edge-color">Line Color:</label>
+                        <input type="color" id="edge-color" value="#333333">
+                    </div>
+                    <div class="setting">
+                        <label for="edge-text-color">Text Color:</label>
+                        <input type="color" id="edge-text-color" value="#000000">
+                    </div>
+                    <div class="setting">
+                        <label for="edge-width">Line Width:</label>
+                        <input type="number" id="edge-width" value="1.5" min="0.5" max="5" step="0.5">
+                    </div>
                 </div>
             </div>
         </div>
