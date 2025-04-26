@@ -31,6 +31,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const ranksepInput = document.getElementById('ranksep');
     const nodeColorInput = document.getElementById('node-color');
     const edgeColorInput = document.getElementById('edge-color');
+    const exportProjectBtn = document.getElementById('export-project');
+    const importProjectInput = document.getElementById('import-project');
 
     // Initialize tables
     function renderNodeTable() {
@@ -355,7 +357,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 return path;
             })
             .attr('stroke', state.settings.edgeColor)
-            .attr('marker-end', 'url(#arrowhead)');
+            .attr('marker-end', 'url(#arrowhead)')
+            .attr('fill', 'none');
         
         // Add edge labels
         edges.filter(d => d.label)
@@ -389,13 +392,39 @@ document.addEventListener('DOMContentLoaded', function() {
             .attr('orient', 'auto')
             .append('path')
             .attr('d', 'M 0 0 L 10 5 L 0 10 z')
-            .attr('fill', state.settings.edgeColor);
+            .attr('fill', state.settings.edgeColor)
+            .attr('stroke', 'none');
     }
 
     // Export functions
     exportSvgBtn.addEventListener('click', function() {
         const svgElement = document.getElementById('graph');
-        const svgData = new XMLSerializer().serializeToString(svgElement);
+        
+        // Clone the SVG to avoid modifying the original
+        const svgClone = svgElement.cloneNode(true);
+        
+        // Add inline CSS to ensure styles are preserved in the export
+        const style = document.createElement('style');
+        style.textContent = `
+            .node rect {
+                stroke: #333;
+                stroke-width: 1.5px;
+            }
+            .node text {
+                font-size: 14px;
+            }
+            .edge path {
+                stroke-width: 1.5px;
+                fill: none;
+            }
+            .edge-label {
+                font-size: 12px;
+                text-anchor: middle;
+            }
+        `;
+        svgClone.insertBefore(style, svgClone.firstChild);
+        
+        const svgData = new XMLSerializer().serializeToString(svgClone);
         const blob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'});
         saveAs(blob, 'graph.svg');
     });
@@ -421,6 +450,67 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         
         img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+    });
+
+    // Export project function
+    exportProjectBtn.addEventListener('click', function() {
+        // Create a project object with all the data
+        const project = {
+            nodes: state.nodes,
+            edges: state.edges,
+            settings: state.settings
+        };
+        
+        // Convert to JSON string
+        const projectJson = JSON.stringify(project, null, 2);
+        
+        // Create and download the file
+        const blob = new Blob([projectJson], {type: 'application/json'});
+        saveAs(blob, 'graph-project.json');
+    });
+
+    // Import project function
+    importProjectInput.addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const project = JSON.parse(e.target.result);
+                
+                // Validate the imported data
+                if (!project.nodes || !project.edges || !project.settings) {
+                    throw new Error('Invalid project file format');
+                }
+                
+                // Update the state with imported data
+                state.nodes = project.nodes;
+                state.edges = project.edges;
+                state.settings = project.settings;
+                
+                // Update UI elements to reflect imported settings
+                rankdirSelect.value = state.settings.rankdir;
+                nodesepInput.value = state.settings.nodesep;
+                ranksepInput.value = state.settings.ranksep;
+                nodeColorInput.value = state.settings.nodeColor;
+                edgeColorInput.value = state.settings.edgeColor;
+                
+                // Refresh the tables and graph
+                renderNodeTable();
+                renderEdgeTable();
+                generateGraph();
+                
+                alert('Project imported successfully!');
+            } catch (error) {
+                alert('Error importing project: ' + error.message);
+            }
+            
+            // Reset the file input
+            event.target.value = '';
+        };
+        
+        reader.readAsText(file);
     });
 
     // Initialize the app

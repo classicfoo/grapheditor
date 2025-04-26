@@ -144,4 +144,30 @@ input, select {
 
 .delete-btn:hover {
     background-color: #d32f2f;
+}
+
+.import-btn {
+    background-color: #2196F3;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 14px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.import-btn:hover {
+    background-color: #0b7dda;
+}
+
+#export-project {
+    background-color: #2196F3;
+}
+
+#export-project:hover {
+    background-color: #0b7dda;
 } 
