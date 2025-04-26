@@ -18,6 +18,8 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Common Node appearance
             nodeStrokeWidth: 1.5,
+            nodeFontFamily: 'Arial, sans-serif',
+            nodeFontSize: 14,
             
             // Shape-specific settings
             rect: {
@@ -45,7 +47,9 @@ document.addEventListener('DOMContentLoaded', function() {
             // Edge appearance
             edgeColor: '#333333',
             edgeTextColor: '#000000',
-            edgeWidth: 1.5
+            edgeWidth: 1.5,
+            edgeFontFamily: 'Arial, sans-serif',
+            edgeFontSize: 12
         }
     };
 
@@ -102,6 +106,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Common Node appearance
         nodeStrokeWidthInput.value = state.settings.nodeStrokeWidth || 1.5;
+        nodeFontFamilySelect.value = state.settings.nodeFontFamily || 'Arial, sans-serif';
+        nodeFontSizeInput.value = state.settings.nodeFontSize || 14;
 
         // Shape-specific settings - Use the now guaranteed-to-exist objects
         rectWidthInput.value = state.settings.rect.width || 100;
@@ -126,6 +132,8 @@ document.addEventListener('DOMContentLoaded', function() {
         edgeColorInput.value = state.settings.edgeColor || '#333333';
         edgeTextColorInput.value = state.settings.edgeTextColor || '#000000';
         edgeWidthInput.value = state.settings.edgeWidth || 1.5;
+        edgeFontFamilySelect.value = state.settings.edgeFontFamily || 'Arial, sans-serif';
+        edgeFontSizeInput.value = state.settings.edgeFontSize || 12;
     }
 
     // Save state to local storage
@@ -169,6 +177,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const diamondFillColorInput = document.getElementById('diamond-fill-color');
     const diamondTextColorInput = document.getElementById('diamond-text-color');
     const diamondStrokeColorInput = document.getElementById('diamond-stroke-color');
+    const nodeFontFamilySelect = document.getElementById('node-font-family');
+    const nodeFontSizeInput = document.getElementById('node-font-size');
+    const edgeFontFamilySelect = document.getElementById('edge-font-family');
+    const edgeFontSizeInput = document.getElementById('edge-font-size');
 
     // Initialize tables
     function renderNodeTable() {
@@ -562,6 +574,18 @@ document.addEventListener('DOMContentLoaded', function() {
         saveToLocalStorage();
     });
 
+    nodeFontFamilySelect.addEventListener('change', function() {
+        state.settings.nodeFontFamily = this.value;
+        generateGraph();
+        saveToLocalStorage();
+    });
+
+    nodeFontSizeInput.addEventListener('change', function() {
+        state.settings.nodeFontSize = parseInt(this.value);
+        generateGraph();
+        saveToLocalStorage();
+    });
+
     edgeTextColorInput.addEventListener('change', function() {
         state.settings.edgeTextColor = this.value;
         generateGraph();
@@ -570,6 +594,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
     edgeWidthInput.addEventListener('change', function() {
         state.settings.edgeWidth = parseFloat(this.value);
+        generateGraph();
+        saveToLocalStorage();
+    });
+
+    edgeFontFamilySelect.addEventListener('change', function() {
+        state.settings.edgeFontFamily = this.value;
+        generateGraph();
+        saveToLocalStorage();
+    });
+
+    edgeFontSizeInput.addEventListener('change', function() {
+        state.settings.edgeFontSize = parseInt(this.value);
         generateGraph();
         saveToLocalStorage();
     });
@@ -826,13 +862,15 @@ dagre.layout(g);
                     break;
             }
             
-            // Add text labels to nodes with shape-specific text color
+            // Add text labels to nodes with shape-specific text color AND common font settings
             node.append('text')
                 .attr('x', d.width / 2)
                 .attr('y', d.height / 2)
     .attr('text-anchor', 'middle')
                 .attr('dominant-baseline', 'middle')
                 .attr('fill', textColor)
+                .style('font-family', state.settings.nodeFontFamily || 'Arial, sans-serif')
+                .style('font-size', (state.settings.nodeFontSize || 14) + 'px')
                 .text(d.label);
         });
         
@@ -1145,7 +1183,7 @@ edges.append('path')
             .attr('marker-end', 'url(#arrowhead)')
             .attr('fill', 'none');
         
-        // Add edge labels with edge text color
+        // Add edge labels with edge text color AND font settings
         edges.filter(d => d.label)
             .append('text')
             .attr('class', 'edge-label')
@@ -1164,6 +1202,8 @@ edges.append('path')
             .attr('text-anchor', 'middle')
             .attr('dominant-baseline', 'middle')
             .attr('fill', state.settings.edgeTextColor)
+            .style('font-family', state.settings.edgeFontFamily || 'Arial, sans-serif')
+            .style('font-size', (state.settings.edgeFontSize || 12) + 'px')
             .text(d => d.label);
         
         // Add arrowhead marker
@@ -1284,6 +1324,8 @@ edges.append('path')
                 
                 // Common Node Appearance
                 nodeStrokeWidthInput.value = state.settings.nodeStrokeWidth || 1.5;
+                nodeFontFamilySelect.value = state.settings.nodeFontFamily || 'Arial, sans-serif';
+                nodeFontSizeInput.value = state.settings.nodeFontSize || 14;
                 
                 // Shape-specific settings - Rectangle
                 rectWidthInput.value = state.settings.rect.width || 100;
@@ -1310,6 +1352,8 @@ edges.append('path')
                 edgeColorInput.value = state.settings.edgeColor || '#333333';
                 edgeTextColorInput.value = state.settings.edgeTextColor || '#000000';
                 edgeWidthInput.value = state.settings.edgeWidth || 1.5;
+                edgeFontFamilySelect.value = state.settings.edgeFontFamily || 'Arial, sans-serif';
+                edgeFontSizeInput.value = state.settings.edgeFontSize || 12;
                 
                 // Refresh the tables and graph
                 renderNodeTable();
