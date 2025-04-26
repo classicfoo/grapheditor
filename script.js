@@ -445,14 +445,290 @@ document.addEventListener('DOMContentLoaded', function() {
             .attr('dominant-baseline', 'middle')
             .text(d => d.label);
         
-        // Add edges
+        // Function to adjust edge endpoints based on node shape
+        function adjustEdgeEndpoints(points, sourceNode, targetNode) {
+            if (!points || points.length < 2) return points;
+            
+            const adjustedPoints = [...points];
+            
+            // Adjust start point (source node)
+            if (sourceNode) {
+                const firstPoint = adjustedPoints[0];
+                const secondPoint = adjustedPoints[1];
+                const sourceX = sourceNode.x;
+                const sourceY = sourceNode.y;
+                
+                // Calculate direction vector from source node center to first edge point
+                const dx = firstPoint.x - sourceX;
+                const dy = firstPoint.y - sourceY;
+                const length = Math.sqrt(dx * dx + dy * dy);
+                
+                // Normalize direction vector
+                const ndx = dx / length;
+                const ndy = dy / length;
+                
+                // Adjust based on shape
+                let intersectionPoint;
+                switch(sourceNode.shape) {
+                    case 'ellipse':
+                        // Ellipse intersection (approximation)
+                        const rxs = sourceNode.width / 2;
+                        const rys = sourceNode.height / 2;
+                        const scale = rxs * rys / Math.sqrt(rys * rys * ndx * ndx + rxs * rxs * ndy * ndy);
+                        intersectionPoint = {
+                            x: sourceX + ndx * scale,
+                            y: sourceY + ndy * scale
+                        };
+                        break;
+                        
+                    case 'diamond':
+                        // Diamond corners
+                        const halfWidth = sourceNode.width / 2;
+                        const halfHeight = sourceNode.height / 2;
+                        
+                        // Diamond corners
+                        const top = { x: sourceX, y: sourceY - halfHeight };
+                        const right = { x: sourceX + halfWidth, y: sourceY };
+                        const bottom = { x: sourceX, y: sourceY + halfHeight };
+                        const left = { x: sourceX - halfWidth, y: sourceY };
+                        
+                        // Determine which edge to intersect with based on the direction
+                        let edge1, edge2;
+                        
+                        if (ndx >= 0 && ndy >= 0) {
+                            // Bottom-right quadrant
+                            edge1 = { p1: right, p2: bottom };
+                        } else if (ndx < 0 && ndy >= 0) {
+                            // Bottom-left quadrant
+                            edge1 = { p1: bottom, p2: left };
+                        } else if (ndx < 0 && ndy < 0) {
+                            // Top-left quadrant
+                            edge1 = { p1: left, p2: top };
+                        } else {
+                            // Top-right quadrant
+                            edge1 = { p1: top, p2: right };
+                        }
+                        
+                        // Find intersection with the line from center to the edge point
+                        const line = { p1: { x: sourceX, y: sourceY }, p2: { x: sourceX + ndx, y: sourceY + ndy } };
+                        
+                        // Line-line intersection
+                        const x1 = edge1.p1.x, y1 = edge1.p1.y;
+                        const x2 = edge1.p2.x, y2 = edge1.p2.y;
+                        const x3 = line.p1.x, y3 = line.p1.y;
+                        const x4 = line.p2.x, y4 = line.p2.y;
+                        
+                        const denominator = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
+                        
+                        if (denominator !== 0) {
+                            const ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denominator;
+                            
+                            if (ua >= 0 && ua <= 1) {
+                                intersectionPoint = {
+                                    x: x1 + ua * (x2 - x1),
+                                    y: y1 + ua * (y2 - y1)
+                                };
+                            }
+                        }
+                        
+                        // If no intersection found (shouldn't happen), use the old method as fallback
+                        if (!intersectionPoint) {
+                            if (Math.abs(ndx) > Math.abs(ndy)) {
+                                // Intersect with left/right edge
+                                intersectionPoint = {
+                                    x: sourceX + Math.sign(ndx) * halfWidth,
+                                    y: sourceY + ndy * (halfWidth / Math.abs(ndx))
+                                };
+                            } else {
+                                // Intersect with top/bottom edge
+                                intersectionPoint = {
+                                    x: sourceX + ndx * (halfHeight / Math.abs(ndy)),
+                                    y: sourceY + Math.sign(ndy) * halfHeight
+                                };
+                            }
+                        }
+                        break;
+                        
+                    case 'rect':
+                    default:
+                        // Rectangle intersection
+                        const rx = sourceNode.width / 2;
+                        const ry = sourceNode.height / 2;
+                        
+                        // Find intersection with rectangle
+                        if (Math.abs(ndx) * ry > Math.abs(ndy) * rx) {
+                            // Intersect with right/left edge
+                            const sx = Math.sign(ndx) * rx;
+                            const sy = ndy * (sx / ndx);
+                            intersectionPoint = {
+                                x: sourceX + sx,
+                                y: sourceY + sy
+                            };
+                        } else {
+                            // Intersect with top/bottom edge
+                            const sy = Math.sign(ndy) * ry;
+                            const sx = ndx * (sy / ndy);
+                            intersectionPoint = {
+                                x: sourceX + sx,
+                                y: sourceY + sy
+                            };
+                        }
+                        break;
+                }
+                
+                adjustedPoints[0] = intersectionPoint;
+            }
+            
+            // Adjust end point (target node)
+            if (targetNode) {
+                const lastPoint = adjustedPoints[adjustedPoints.length - 1];
+                const secondLastPoint = adjustedPoints[adjustedPoints.length - 2];
+                const targetX = targetNode.x;
+                const targetY = targetNode.y;
+                
+                // Calculate direction vector from last edge point to target node center
+                const dx = targetX - lastPoint.x;
+                const dy = targetY - lastPoint.y;
+                const length = Math.sqrt(dx * dx + dy * dy);
+                
+                // Normalize direction vector
+                const ndx = dx / length;
+                const ndy = dy / length;
+                
+                // Adjust based on shape
+                let intersectionPoint;
+                switch(targetNode.shape) {
+                    case 'ellipse':
+                        // Ellipse intersection (approximation)
+                        const rxt = targetNode.width / 2;
+                        const ryt = targetNode.height / 2;
+                        const scale = rxt * ryt / Math.sqrt(ryt * ryt * ndx * ndx + rxt * rxt * ndy * ndy);
+                        intersectionPoint = {
+                            x: targetX - ndx * scale,
+                            y: targetY - ndy * scale
+                        };
+                        break;
+                        
+                    case 'diamond':
+                        // Diamond corners
+                        const halfWidth = targetNode.width / 2;
+                        const halfHeight = targetNode.height / 2;
+                        
+                        // Diamond corners
+                        const top = { x: targetX, y: targetY - halfHeight };
+                        const right = { x: targetX + halfWidth, y: targetY };
+                        const bottom = { x: targetX, y: targetY + halfHeight };
+                        const left = { x: targetX - halfWidth, y: targetY };
+                        
+                        // Determine which edge to intersect with based on the direction
+                        let edge1, edge2;
+                        
+                        if (ndx >= 0 && ndy >= 0) {
+                            // Bottom-right quadrant
+                            edge1 = { p1: top, p2: left };
+                        } else if (ndx < 0 && ndy >= 0) {
+                            // Bottom-left quadrant
+                            edge1 = { p1: top, p2: right };
+                        } else if (ndx < 0 && ndy < 0) {
+                            // Top-left quadrant
+                            edge1 = { p1: bottom, p2: right };
+                        } else {
+                            // Top-right quadrant
+                            edge1 = { p1: left, p2: bottom };
+                        }
+                        
+                        // Find intersection with the line from center to the edge point
+                        const line = { p1: { x: targetX, y: targetY }, p2: { x: targetX + ndx, y: targetY + ndy } };
+                        
+                        // Line-line intersection
+                        const x1 = edge1.p1.x, y1 = edge1.p1.y;
+                        const x2 = edge1.p2.x, y2 = edge1.p2.y;
+                        const x3 = line.p1.x, y3 = line.p1.y;
+                        const x4 = line.p2.x, y4 = line.p2.y;
+                        
+                        const denominator = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
+                        
+                        if (denominator !== 0) {
+                            const ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denominator;
+                            
+                            if (ua >= 0 && ua <= 1) {
+                                intersectionPoint = {
+                                    x: x1 + ua * (x2 - x1),
+                                    y: y1 + ua * (y2 - y1)
+                                };
+                            }
+                        }
+                        
+                        // If no intersection found (shouldn't happen), use the old method as fallback
+                        if (!intersectionPoint) {
+                            if (Math.abs(ndx) > Math.abs(ndy)) {
+                                // Intersect with left/right edge
+                                intersectionPoint = {
+                                    x: targetX - Math.sign(ndx) * halfWidth,
+                                    y: targetY - ndy * (halfWidth / Math.abs(ndx))
+                                };
+                            } else {
+                                // Intersect with top/bottom edge
+                                intersectionPoint = {
+                                    x: targetX - ndx * (halfHeight / Math.abs(ndy)),
+                                    y: targetY - Math.sign(ndy) * halfHeight
+                                };
+                            }
+                        }
+                        break;
+                        
+                    case 'rect':
+                    default:
+                        // Rectangle intersection
+                        const rx = targetNode.width / 2;
+                        const ry = targetNode.height / 2;
+                        
+                        // Find intersection with rectangle
+                        if (Math.abs(ndx) * ry > Math.abs(ndy) * rx) {
+                            // Intersect with right/left edge
+                            const sx = Math.sign(ndx) * rx;
+                            const sy = ndy * (sx / ndx);
+                            intersectionPoint = {
+                                x: targetX - sx,
+                                y: targetY - sy
+                            };
+                        } else {
+                            // Intersect with top/bottom edge
+                            const sy = Math.sign(ndy) * ry;
+                            const sx = ndx * (sy / ndy);
+                            intersectionPoint = {
+                                x: targetX - sx,
+                                y: targetY - sy
+                            };
+                        }
+                        break;
+                }
+                
+                adjustedPoints[adjustedPoints.length - 1] = intersectionPoint;
+            }
+            
+            return adjustedPoints;
+        }
+        
+        // Add edges with adjusted endpoints
         const edges = svgGroup.selectAll('.edge')
             .data(g.edges().map(e => {
+                const sourceNode = g.node(e.v);
+                const targetNode = g.node(e.w);
+                const edgeData = g.edge(e);
+                
+                // Adjust edge points based on node shapes
+                const adjustedPoints = adjustEdgeEndpoints(
+                    edgeData.points, 
+                    sourceNode, 
+                    targetNode
+                );
+                
                 return {
-                    points: g.edge(e).points,
-                    source: g.node(e.v),
-                    target: g.node(e.w),
-                    label: g.edge(e).label
+                    points: adjustedPoints,
+                    source: sourceNode,
+                    target: targetNode,
+                    label: edgeData.label
                 };
             }))
             .enter()
