@@ -2,9 +2,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize app state
     let state = {
         nodes: [
-            { id: 'A', label: 'Node A', width: 100, height: 40 },
-            { id: 'B', label: 'Node B', width: 100, height: 40 },
-            { id: 'C', label: 'Node C', width: 100, height: 40 }
+            { id: 'A', label: 'Node A', width: 100, height: 40, shape: 'rect' },
+            { id: 'B', label: 'Node B', width: 100, height: 40, shape: 'rect' },
+            { id: 'C', label: 'Node C', width: 100, height: 40, shape: 'rect' }
         ],
         edges: [
             { source: 'A', target: 'B', label: 'Edge 1' },
@@ -72,11 +72,30 @@ document.addEventListener('DOMContentLoaded', function() {
         nodeTbody.innerHTML = '';
         state.nodes.forEach((node, index) => {
             const row = document.createElement('tr');
+            
+            // Create shape dropdown options
+            const shapeOptions = [
+                { value: 'rect', label: 'Rectangle' },
+                { value: 'ellipse', label: 'Ellipse' },
+                { value: 'diamond', label: 'Diamond' }
+            ];
+            
+            let shapeOptionsHTML = '';
+            shapeOptions.forEach(option => {
+                const selected = node.shape === option.value ? 'selected' : '';
+                shapeOptionsHTML += `<option value="${option.value}" ${selected}>${option.label}</option>`;
+            });
+            
             row.innerHTML = `
                 <td><input type="text" class="node-id" value="${node.id}" data-index="${index}"></td>
                 <td><input type="text" class="node-label" value="${node.label}" data-index="${index}"></td>
                 <td><input type="number" class="node-width" value="${node.width}" min="30" max="300" data-index="${index}"></td>
                 <td><input type="number" class="node-height" value="${node.height}" min="20" max="200" data-index="${index}"></td>
+                <td>
+                    <select class="node-shape" data-index="${index}">
+                        ${shapeOptionsHTML}
+                    </select>
+                </td>
                 <td><button class="delete-btn delete-node" data-index="${index}">Delete</button></td>
             `;
             nodeTbody.appendChild(row);
@@ -125,6 +144,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 const index = parseInt(this.dataset.index);
                 state.nodes[index].height = parseInt(this.value);
                 generateGraph(); // Regenerate graph when node height changes
+                saveToLocalStorage(); // Save changes to local storage
+            });
+        });
+
+        // Add event listener for shape dropdown
+        document.querySelectorAll('.node-shape').forEach(select => {
+            select.addEventListener('change', function() {
+                const index = parseInt(this.dataset.index);
+                state.nodes[index].shape = this.value;
+                generateGraph(); // Regenerate graph when node shape changes
                 saveToLocalStorage(); // Save changes to local storage
             });
         });
@@ -237,7 +266,8 @@ document.addEventListener('DOMContentLoaded', function() {
             id: newId,
             label: newId,
             width: 100,
-            height: 40
+            height: 40,
+            shape: 'rect' // Default shape is rectangle
         });
         
         renderNodeTable();
@@ -318,7 +348,8 @@ document.addEventListener('DOMContentLoaded', function() {
             g.setNode(node.id, {
                 label: node.label,
                 width: node.width,
-                height: node.height
+                height: node.height,
+                shape: node.shape
             });
         });
 
@@ -353,7 +384,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const svgGroup = svg.append('g')
             .attr('transform', 'translate(20, 20)');
         
-        // Add nodes
+        // Add nodes with different shapes
         const nodes = svgGroup.selectAll('.node')
             .data(g.nodes().map(v => {
                 return { id: v, ...g.node(v) };
@@ -363,13 +394,44 @@ document.addEventListener('DOMContentLoaded', function() {
             .attr('class', 'node')
             .attr('transform', d => `translate(${d.x - d.width/2}, ${d.y - d.height/2})`);
         
-        nodes.append('rect')
-            .attr('width', d => d.width)
-            .attr('height', d => d.height)
-            .attr('rx', 5)
-            .attr('ry', 5)
-            .attr('fill', state.settings.nodeColor);
+        // Function to create a diamond path
+        function diamondPath(width, height) {
+            return `M${width/2},0 L${width},${height/2} L${width/2},${height} L0,${height/2} Z`;
+        }
         
+        // Add the appropriate shape based on node.shape
+        nodes.each(function(d) {
+            const node = d3.select(this);
+            
+            switch(d.shape) {
+                case 'ellipse':
+                    node.append('ellipse')
+                        .attr('cx', d.width / 2)
+                        .attr('cy', d.height / 2)
+                        .attr('rx', d.width / 2)
+                        .attr('ry', d.height / 2)
+                        .attr('fill', state.settings.nodeColor);
+                    break;
+                
+                case 'diamond':
+                    node.append('path')
+                        .attr('d', diamondPath(d.width, d.height))
+                        .attr('fill', state.settings.nodeColor);
+                    break;
+                
+                case 'rect':
+                default:
+                    node.append('rect')
+                        .attr('width', d.width)
+                        .attr('height', d.height)
+                        .attr('rx', 5)
+                        .attr('ry', 5)
+                        .attr('fill', state.settings.nodeColor);
+                    break;
+            }
+        });
+        
+        // Add text labels to nodes
         nodes.append('text')
             .attr('x', d => d.width / 2)
             .attr('y', d => d.height / 2)
