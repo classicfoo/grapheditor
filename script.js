@@ -254,7 +254,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Add new node
+    // Add new node with automatic edge creation
     addNodeBtn.addEventListener('click', function() {
         // Generate a unique ID
         let newId = 'Node' + (state.nodes.length + 1);
@@ -262,6 +262,7 @@ document.addEventListener('DOMContentLoaded', function() {
             newId = 'Node' + (parseInt(newId.replace('Node', '')) + 1);
         }
         
+        // Create the new node
         state.nodes.push({
             id: newId,
             label: newId,
@@ -270,10 +271,40 @@ document.addEventListener('DOMContentLoaded', function() {
             shape: 'rect' // Default shape is rectangle
         });
         
+        // If there are other nodes, automatically create an edge
+        if (state.nodes.length > 1) {
+            // Find a suitable source node (most recent node with connections)
+            let sourceNode = null;
+            
+            // First, try to find the most recent node that has connections
+            for (let i = state.nodes.length - 2; i >= 0; i--) {
+                const nodeId = state.nodes[i].id;
+                const hasConnections = state.edges.some(edge => 
+                    edge.source === nodeId || edge.target === nodeId
+                );
+                if (hasConnections) {
+                    sourceNode = nodeId;
+                    break;
+                }
+            }
+            
+            // If no connected node found, use the most recent existing node
+            if (!sourceNode) {
+                sourceNode = state.nodes[state.nodes.length - 2].id;
+            }
+            
+            // Create an edge from the source node to the new node
+            state.edges.push({
+                source: sourceNode,
+                target: newId,
+                label: ''
+            });
+        }
+        
         renderNodeTable();
         renderEdgeTable();
-        generateGraph(); // Regenerate graph when new node is added
-        saveToLocalStorage(); // Save changes to local storage
+        generateGraph();
+        saveToLocalStorage();
     });
 
     // Add new edge
