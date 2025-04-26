@@ -16,13 +16,31 @@ document.addEventListener('DOMContentLoaded', function() {
             nodesep: 50,
             ranksep: 50,
             
-            // Node appearance
-            nodeColor: '#ffffff',
-            nodeTextColor: '#000000',
-            nodeStrokeColor: '#333333',
+            // Common Node appearance
             nodeStrokeWidth: 1.5,
-            nodeWidth: 100,
-            nodeHeight: 40,
+            
+            // Shape-specific settings
+            rect: {
+                width: 100,
+                height: 40,
+                fillColor: '#ffffff',
+                textColor: '#000000',
+                strokeColor: '#333333'
+            },
+            ellipse: {
+                width: 100,
+                height: 40,
+                fillColor: '#ffffff',
+                textColor: '#000000',
+                strokeColor: '#333333'
+            },
+            diamond: {
+                width: 100,
+                height: 40,
+                fillColor: '#ffffff',
+                textColor: '#000000',
+                strokeColor: '#333333'
+            },
             
             // Edge appearance
             edgeColor: '#333333',
@@ -37,33 +55,77 @@ document.addEventListener('DOMContentLoaded', function() {
         if (savedState) {
             try {
                 const parsedState = JSON.parse(savedState);
-                if (parsedState.nodes && parsedState.edges && parsedState.settings) {
-                    state = parsedState;
-                    
-                    // Update UI elements to reflect loaded settings
-                    rankdirSelect.value = state.settings.rankdir;
-                    nodesepInput.value = state.settings.nodesep;
-                    ranksepInput.value = state.settings.ranksep;
-                    
-                    // Node appearance
-                    nodeColorInput.value = state.settings.nodeColor;
-                    nodeTextColorInput.value = state.settings.nodeTextColor || '#000000';
-                    nodeStrokeColorInput.value = state.settings.nodeStrokeColor || '#333333';
-                    nodeStrokeWidthInput.value = state.settings.nodeStrokeWidth || 1.5;
-                    nodeWidthInput.value = state.settings.nodeWidth || 100;
-                    nodeHeightInput.value = state.settings.nodeHeight || 40;
-                    
-                    // Edge appearance
-                    edgeColorInput.value = state.settings.edgeColor;
-                    edgeTextColorInput.value = state.settings.edgeTextColor || '#000000';
-                    edgeWidthInput.value = state.settings.edgeWidth || 1.5;
-                    
+                // Basic validation: check if essential parts exist
+                if (parsedState && parsedState.nodes && parsedState.edges && parsedState.settings) {
+                    state = parsedState; // Assign the loaded state
+
+                    // --- Crucial Check ---
+                    // Ensure the nested settings objects exist before accessing their properties.
+                    // Initialize them if they are missing from the loaded state.
+                    state.settings = state.settings || {}; // Should be redundant due to 'if' check, but safe.
+                    state.settings.rect = state.settings.rect || { width: 100, height: 40, fillColor: '#ffffff', textColor: '#000000', strokeColor: '#333333' };
+                    state.settings.ellipse = state.settings.ellipse || { width: 100, height: 40, fillColor: '#ffffff', textColor: '#000000', strokeColor: '#333333' };
+                    state.settings.diamond = state.settings.diamond || { width: 100, height: 40, fillColor: '#ffffff', textColor: '#000000', strokeColor: '#333333' };
+                    // --- End Crucial Check ---
+
                     console.log('State loaded from local storage');
+                } else {
+                    console.warn('Loaded state from local storage is incomplete or invalid. Using defaults.');
+                    // If loaded state was bad, ensure the default state's settings objects are present
+                    state.settings = state.settings || {};
+                    state.settings.rect = state.settings.rect || { width: 100, height: 40, fillColor: '#ffffff', textColor: '#000000', strokeColor: '#333333' };
+                    state.settings.ellipse = state.settings.ellipse || { width: 100, height: 40, fillColor: '#ffffff', textColor: '#000000', strokeColor: '#333333' };
+                    state.settings.diamond = state.settings.diamond || { width: 100, height: 40, fillColor: '#ffffff', textColor: '#000000', strokeColor: '#333333' };
                 }
             } catch (error) {
                 console.error('Error loading state from local storage:', error);
+                // If JSON parsing failed, ensure the default state's settings objects are present
+                state.settings = state.settings || {};
+                state.settings.rect = state.settings.rect || { width: 100, height: 40, fillColor: '#ffffff', textColor: '#000000', strokeColor: '#333333' };
+                state.settings.ellipse = state.settings.ellipse || { width: 100, height: 40, fillColor: '#ffffff', textColor: '#000000', strokeColor: '#333333' };
+                state.settings.diamond = state.settings.diamond || { width: 100, height: 40, fillColor: '#ffffff', textColor: '#000000', strokeColor: '#333333' };
             }
+        } else {
+             console.log('No saved state found, using defaults.');
+             // Ensure default state has the shape objects (it should, but double-check)
+             state.settings = state.settings || {};
+             state.settings.rect = state.settings.rect || { width: 100, height: 40, fillColor: '#ffffff', textColor: '#000000', strokeColor: '#333333' };
+             state.settings.ellipse = state.settings.ellipse || { width: 100, height: 40, fillColor: '#ffffff', textColor: '#000000', strokeColor: '#333333' };
+             state.settings.diamond = state.settings.diamond || { width: 100, height: 40, fillColor: '#ffffff', textColor: '#000000', strokeColor: '#333333' };
         }
+
+        // --- Update UI elements AFTER ensuring state is valid ---
+        // This section now safely updates the UI based on the potentially modified 'state' object.
+        rankdirSelect.value = state.settings.rankdir || 'TB';
+        nodesepInput.value = state.settings.nodesep || 50;
+        ranksepInput.value = state.settings.ranksep || 50;
+
+        // Common Node appearance
+        nodeStrokeWidthInput.value = state.settings.nodeStrokeWidth || 1.5;
+
+        // Shape-specific settings - Use the now guaranteed-to-exist objects
+        rectWidthInput.value = state.settings.rect.width || 100;
+        rectHeightInput.value = state.settings.rect.height || 40;
+        rectFillColorInput.value = state.settings.rect.fillColor || '#ffffff';
+        rectTextColorInput.value = state.settings.rect.textColor || '#000000';
+        rectStrokeColorInput.value = state.settings.rect.strokeColor || '#333333';
+
+        ellipseWidthInput.value = state.settings.ellipse.width || 100;
+        ellipseHeightInput.value = state.settings.ellipse.height || 40;
+        ellipseFillColorInput.value = state.settings.ellipse.fillColor || '#ffffff';
+        ellipseTextColorInput.value = state.settings.ellipse.textColor || '#000000';
+        ellipseStrokeColorInput.value = state.settings.ellipse.strokeColor || '#333333';
+
+        diamondWidthInput.value = state.settings.diamond.width || 100;
+        diamondHeightInput.value = state.settings.diamond.height || 40;
+        diamondFillColorInput.value = state.settings.diamond.fillColor || '#ffffff';
+        diamondTextColorInput.value = state.settings.diamond.textColor || '#000000';
+        diamondStrokeColorInput.value = state.settings.diamond.strokeColor || '#333333';
+
+        // Edge appearance
+        edgeColorInput.value = state.settings.edgeColor || '#333333';
+        edgeTextColorInput.value = state.settings.edgeTextColor || '#000000';
+        edgeWidthInput.value = state.settings.edgeWidth || 1.5;
     }
 
     // Save state to local storage
@@ -76,6 +138,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // DOM elements
+    const nodeTable = document.getElementById('node-table');
     const nodeTbody = document.getElementById('node-tbody');
     const edgeTbody = document.getElementById('edge-tbody');
     const addNodeBtn = document.getElementById('add-node');
@@ -85,17 +148,27 @@ document.addEventListener('DOMContentLoaded', function() {
     const rankdirSelect = document.getElementById('rankdir');
     const nodesepInput = document.getElementById('nodesep');
     const ranksepInput = document.getElementById('ranksep');
-    const nodeColorInput = document.getElementById('node-color');
+    const nodeStrokeWidthInput = document.getElementById('node-stroke-width');
     const edgeColorInput = document.getElementById('edge-color');
     const exportProjectBtn = document.getElementById('export-project');
     const importProjectInput = document.getElementById('import-project');
-    const nodeTextColorInput = document.getElementById('node-text-color');
-    const nodeStrokeColorInput = document.getElementById('node-stroke-color');
-    const nodeStrokeWidthInput = document.getElementById('node-stroke-width');
     const edgeTextColorInput = document.getElementById('edge-text-color');
     const edgeWidthInput = document.getElementById('edge-width');
-    const nodeWidthInput = document.getElementById('node-width');
-    const nodeHeightInput = document.getElementById('node-height');
+    const rectWidthInput = document.getElementById('rect-width');
+    const rectHeightInput = document.getElementById('rect-height');
+    const rectFillColorInput = document.getElementById('rect-fill-color');
+    const rectTextColorInput = document.getElementById('rect-text-color');
+    const rectStrokeColorInput = document.getElementById('rect-stroke-color');
+    const ellipseWidthInput = document.getElementById('ellipse-width');
+    const ellipseHeightInput = document.getElementById('ellipse-height');
+    const ellipseFillColorInput = document.getElementById('ellipse-fill-color');
+    const ellipseTextColorInput = document.getElementById('ellipse-text-color');
+    const ellipseStrokeColorInput = document.getElementById('ellipse-stroke-color');
+    const diamondWidthInput = document.getElementById('diamond-width');
+    const diamondHeightInput = document.getElementById('diamond-height');
+    const diamondFillColorInput = document.getElementById('diamond-fill-color');
+    const diamondTextColorInput = document.getElementById('diamond-text-color');
+    const diamondStrokeColorInput = document.getElementById('diamond-stroke-color');
 
     // Initialize tables
     function renderNodeTable() {
@@ -483,30 +556,6 @@ document.addEventListener('DOMContentLoaded', function() {
         saveToLocalStorage(); // Save changes to local storage
     });
 
-    nodeColorInput.addEventListener('change', function() {
-        state.settings.nodeColor = this.value;
-        generateGraph(); // Regenerate graph when node color changes
-        saveToLocalStorage(); // Save changes to local storage
-    });
-
-    edgeColorInput.addEventListener('change', function() {
-        state.settings.edgeColor = this.value;
-        generateGraph(); // Regenerate graph when edge color changes
-        saveToLocalStorage(); // Save changes to local storage
-    });
-
-    nodeTextColorInput.addEventListener('change', function() {
-        state.settings.nodeTextColor = this.value;
-        generateGraph();
-        saveToLocalStorage();
-    });
-
-    nodeStrokeColorInput.addEventListener('change', function() {
-        state.settings.nodeStrokeColor = this.value;
-        generateGraph();
-        saveToLocalStorage();
-    });
-
     nodeStrokeWidthInput.addEventListener('change', function() {
         state.settings.nodeStrokeWidth = parseFloat(this.value);
         generateGraph();
@@ -525,15 +574,83 @@ document.addEventListener('DOMContentLoaded', function() {
         saveToLocalStorage();
     });
 
-    // Add event listeners for node size settings
-    nodeWidthInput.addEventListener('change', function() {
-        state.settings.nodeWidth = parseInt(this.value);
+    // Shape-Specific Settings Listeners - Rectangle
+    rectWidthInput.addEventListener('change', function() {
+        state.settings.rect.width = parseInt(this.value);
+        generateGraph();
+        saveToLocalStorage();
+    });
+    rectHeightInput.addEventListener('change', function() {
+        state.settings.rect.height = parseInt(this.value);
+        generateGraph();
+        saveToLocalStorage();
+    });
+    rectFillColorInput.addEventListener('change', function() {
+        state.settings.rect.fillColor = this.value;
+        generateGraph();
+        saveToLocalStorage();
+    });
+    rectTextColorInput.addEventListener('change', function() {
+        state.settings.rect.textColor = this.value;
+        generateGraph();
+        saveToLocalStorage();
+    });
+    rectStrokeColorInput.addEventListener('change', function() {
+        state.settings.rect.strokeColor = this.value;
         generateGraph();
         saveToLocalStorage();
     });
 
-    nodeHeightInput.addEventListener('change', function() {
-        state.settings.nodeHeight = parseInt(this.value);
+    // Shape-Specific Settings Listeners - Ellipse
+    ellipseWidthInput.addEventListener('change', function() {
+        state.settings.ellipse.width = parseInt(this.value);
+        generateGraph();
+        saveToLocalStorage();
+    });
+    ellipseHeightInput.addEventListener('change', function() {
+        state.settings.ellipse.height = parseInt(this.value);
+        generateGraph();
+        saveToLocalStorage();
+    });
+    ellipseFillColorInput.addEventListener('change', function() {
+        state.settings.ellipse.fillColor = this.value;
+        generateGraph();
+        saveToLocalStorage();
+    });
+    ellipseTextColorInput.addEventListener('change', function() {
+        state.settings.ellipse.textColor = this.value;
+        generateGraph();
+        saveToLocalStorage();
+    });
+    ellipseStrokeColorInput.addEventListener('change', function() {
+        state.settings.ellipse.strokeColor = this.value;
+        generateGraph();
+        saveToLocalStorage();
+    });
+
+    // Shape-Specific Settings Listeners - Diamond
+    diamondWidthInput.addEventListener('change', function() {
+        state.settings.diamond.width = parseInt(this.value);
+        generateGraph();
+        saveToLocalStorage();
+    });
+    diamondHeightInput.addEventListener('change', function() {
+        state.settings.diamond.height = parseInt(this.value);
+        generateGraph();
+        saveToLocalStorage();
+    });
+    diamondFillColorInput.addEventListener('change', function() {
+        state.settings.diamond.fillColor = this.value;
+        generateGraph();
+        saveToLocalStorage();
+    });
+    diamondTextColorInput.addEventListener('change', function() {
+        state.settings.diamond.textColor = this.value;
+        generateGraph();
+        saveToLocalStorage();
+    });
+    diamondStrokeColorInput.addEventListener('change', function() {
+        state.settings.diamond.strokeColor = this.value;
         generateGraph();
         saveToLocalStorage();
     });
@@ -551,15 +668,34 @@ document.addEventListener('DOMContentLoaded', function() {
             }).setDefaultEdgeLabel(function() { return {}; });
             
             // Ensure node dimensions are valid (minimum values)
-            const nodeWidth = Math.max(30, state.settings.nodeWidth || 100);
-            const nodeHeight = Math.max(20, state.settings.nodeHeight || 40);
+            const nodeWidth = Math.max(30, state.settings.rect?.width || 100);
+            const nodeHeight = Math.max(20, state.settings.rect?.height || 40);
             
-            // Add nodes to the graph with validated dimensions
+            // Add nodes to the graph with shape-specific dimensions
             state.nodes.forEach(node => {
+                let width, height;
+                
+                // Get dimensions based on shape
+                switch(node.shape) {
+                    case 'ellipse':
+                        width = state.settings.ellipse?.width || 100;
+                        height = state.settings.ellipse?.height || 40;
+                        break;
+                    case 'diamond':
+                        width = state.settings.diamond?.width || 100;
+                        height = state.settings.diamond?.height || 40;
+                        break;
+                    case 'rect':
+                    default:
+                        width = state.settings.rect?.width || 100;
+                        height = state.settings.rect?.height || 40;
+                        break;
+                }
+                
                 g.setNode(node.id, {
                     label: node.label,
-                    width: nodeWidth,
-                    height: nodeHeight,
+                    width: width,
+                    height: height,
                     shape: node.shape
                 });
             });
@@ -638,50 +774,68 @@ dagre.layout(g);
         // Add the appropriate shape based on node.shape with updated styling
         nodes.each(function(d) {
             const node = d3.select(this);
+            let shapeSettings;
+            let fillColor, textColor, strokeColor;
             
+            // Get shape-specific settings or defaults
             switch(d.shape) {
                 case 'ellipse':
+                    shapeSettings = state.settings.ellipse || {};
+                    fillColor = shapeSettings.fillColor || '#ffffff';
+                    textColor = shapeSettings.textColor || '#000000';
+                    strokeColor = shapeSettings.strokeColor || '#333333';
+
                     node.append('ellipse')
                         .attr('cx', d.width / 2)
                         .attr('cy', d.height / 2)
                         .attr('rx', d.width / 2)
                         .attr('ry', d.height / 2)
-                        .attr('fill', state.settings.nodeColor)
-                        .attr('stroke', state.settings.nodeStrokeColor)
+                        .attr('fill', fillColor)
+                        .attr('stroke', strokeColor)
                         .attr('stroke-width', state.settings.nodeStrokeWidth);
                     break;
                 
                 case 'diamond':
+                    shapeSettings = state.settings.diamond || {};
+                    fillColor = shapeSettings.fillColor || '#ffffff';
+                    textColor = shapeSettings.textColor || '#000000';
+                    strokeColor = shapeSettings.strokeColor || '#333333';
+
                     node.append('path')
                         .attr('d', diamondPath(d.width, d.height))
-                        .attr('fill', state.settings.nodeColor)
-                        .attr('stroke', state.settings.nodeStrokeColor)
+                        .attr('fill', fillColor)
+                        .attr('stroke', strokeColor)
                         .attr('stroke-width', state.settings.nodeStrokeWidth);
                     break;
                 
                 case 'rect':
                 default:
+                    shapeSettings = state.settings.rect || {};
+                    fillColor = shapeSettings.fillColor || '#ffffff';
+                    textColor = shapeSettings.textColor || '#000000';
+                    strokeColor = shapeSettings.strokeColor || '#333333';
+
                     node.append('rect')
                         .attr('width', d.width)
                         .attr('height', d.height)
                         .attr('rx', 5)
                         .attr('ry', 5)
-                        .attr('fill', state.settings.nodeColor)
-                        .attr('stroke', state.settings.nodeStrokeColor)
+                        .attr('fill', fillColor)
+                        .attr('stroke', strokeColor)
                         .attr('stroke-width', state.settings.nodeStrokeWidth);
                     break;
             }
+            
+            // Add text labels to nodes with shape-specific text color
+            node.append('text')
+                .attr('x', d.width / 2)
+                .attr('y', d.height / 2)
+    .attr('text-anchor', 'middle')
+                .attr('dominant-baseline', 'middle')
+                .attr('fill', textColor)
+                .text(d.label);
         });
         
-        // Add text labels to nodes with node text color
-nodes.append('text')
-            .attr('x', d => d.width / 2)
-            .attr('y', d => d.height / 2)
-    .attr('text-anchor', 'middle')
-            .attr('dominant-baseline', 'middle')
-            .attr('fill', state.settings.nodeTextColor)
-    .text(d => d.label);
-
         // Function to adjust edge endpoints based on node shape
         function adjustEdgeEndpoints(points, sourceNode, targetNode) {
             if (!points || points.length < 2) return points;
@@ -1113,8 +1267,9 @@ edges.append('path')
                 const project = JSON.parse(e.target.result);
                 
                 // Validate the imported data
-                if (!project.nodes || !project.edges || !project.settings) {
-                    throw new Error('Invalid project file format');
+                if (!project.nodes || !project.edges || !project.settings ||
+                    !project.settings.rect || !project.settings.ellipse || !project.settings.diamond) {
+                    throw new Error('Invalid or incomplete project file format');
                 }
                 
                 // Update the state with imported data
@@ -1123,14 +1278,36 @@ edges.append('path')
                 state.settings = project.settings;
                 
                 // Update UI elements to reflect imported settings
-                rankdirSelect.value = state.settings.rankdir;
-                nodesepInput.value = state.settings.nodesep;
-                ranksepInput.value = state.settings.ranksep;
-                nodeColorInput.value = state.settings.nodeColor;
-                edgeColorInput.value = state.settings.edgeColor;
-                nodeTextColorInput.value = state.settings.nodeTextColor || '#000000';
-                nodeStrokeColorInput.value = state.settings.nodeStrokeColor || '#333333';
+                rankdirSelect.value = state.settings.rankdir || 'TB';
+                nodesepInput.value = state.settings.nodesep || 50;
+                ranksepInput.value = state.settings.ranksep || 50;
+                
+                // Common Node Appearance
                 nodeStrokeWidthInput.value = state.settings.nodeStrokeWidth || 1.5;
+                
+                // Shape-specific settings - Rectangle
+                rectWidthInput.value = state.settings.rect.width || 100;
+                rectHeightInput.value = state.settings.rect.height || 40;
+                rectFillColorInput.value = state.settings.rect.fillColor || '#ffffff';
+                rectTextColorInput.value = state.settings.rect.textColor || '#000000';
+                rectStrokeColorInput.value = state.settings.rect.strokeColor || '#333333';
+                
+                // Shape-specific settings - Ellipse
+                ellipseWidthInput.value = state.settings.ellipse.width || 100;
+                ellipseHeightInput.value = state.settings.ellipse.height || 40;
+                ellipseFillColorInput.value = state.settings.ellipse.fillColor || '#ffffff';
+                ellipseTextColorInput.value = state.settings.ellipse.textColor || '#000000';
+                ellipseStrokeColorInput.value = state.settings.ellipse.strokeColor || '#333333';
+                
+                // Shape-specific settings - Diamond
+                diamondWidthInput.value = state.settings.diamond.width || 100;
+                diamondHeightInput.value = state.settings.diamond.height || 40;
+                diamondFillColorInput.value = state.settings.diamond.fillColor || '#ffffff';
+                diamondTextColorInput.value = state.settings.diamond.textColor || '#000000';
+                diamondStrokeColorInput.value = state.settings.diamond.strokeColor || '#333333';
+                
+                // Edge appearance
+                edgeColorInput.value = state.settings.edgeColor || '#333333';
                 edgeTextColorInput.value = state.settings.edgeTextColor || '#000000';
                 edgeWidthInput.value = state.settings.edgeWidth || 1.5;
                 
@@ -1143,6 +1320,7 @@ edges.append('path')
                 alert('Project imported successfully!');
             } catch (error) {
                 alert('Error importing project: ' + error.message);
+                console.error("Import Error:", error); // Log detailed error
             }
             
             // Reset the file input
@@ -1171,7 +1349,7 @@ edges.append('path')
     renderEdgeTable();
     
     generateGraph(); // Generate graph on load
-    });
+});
 
 // Add a function to create and show tooltips
 function createTooltip(element, text, header = null) {

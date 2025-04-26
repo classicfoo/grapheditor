@@ -85,29 +85,55 @@
                 
                 <div class="setting-group">
                     <h3>Node Appearance</h3>
-                    <div class="setting">
-                        <label for="node-color">Fill Color:</label>
-                        <input type="color" id="node-color" value="#ffffff">
-                    </div>
-                    <div class="setting">
-                        <label for="node-text-color">Text Color:</label>
-                        <input type="color" id="node-text-color" value="#000000">
-                    </div>
-                    <div class="setting">
-                        <label for="node-stroke-color">Border Color:</label>
-                        <input type="color" id="node-stroke-color" value="#333333">
-                    </div>
+
+                    <!-- Common node settings -->
                     <div class="setting">
                         <label for="node-stroke-width">Border Width:</label>
                         <input type="number" id="node-stroke-width" value="1.5" min="0" max="5" step="0.5">
                     </div>
-                    <div class="setting">
-                        <label for="node-width">Default Width:</label>
-                        <input type="number" id="node-width" value="100" min="30" max="300">
-                    </div>
-                    <div class="setting">
-                        <label for="node-height">Default Height:</label>
-                        <input type="number" id="node-height" value="40" min="20" max="200">
+                    <!-- Removed Fill Color, Text Color, Border Color from here -->
+
+                    <!-- Shape-specific settings table -->
+                    <div class="shape-settings">
+                        <h4>Shape-Specific Settings</h4>
+                        <table class="settings-table">
+                            <thead>
+                                <tr>
+                                    <th>Shape</th>
+                                    <th>Width</th>
+                                    <th>Height</th>
+                                    <th>Fill Color</th>
+                                    <th>Text Color</th>
+                                    <th>Border Color</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Rectangle</td>
+                                    <td><input type="number" id="rect-width" value="100" min="30" max="300"></td>
+                                    <td><input type="number" id="rect-height" value="40" min="20" max="200"></td>
+                                    <td><input type="color" id="rect-fill-color" value="#ffffff"></td>
+                                    <td><input type="color" id="rect-text-color" value="#000000"></td>
+                                    <td><input type="color" id="rect-stroke-color" value="#333333"></td>
+                                </tr>
+                                <tr>
+                                    <td>Ellipse</td>
+                                    <td><input type="number" id="ellipse-width" value="100" min="30" max="300"></td>
+                                    <td><input type="number" id="ellipse-height" value="40" min="20" max="200"></td>
+                                    <td><input type="color" id="ellipse-fill-color" value="#ffffff"></td>
+                                    <td><input type="color" id="ellipse-text-color" value="#000000"></td>
+                                    <td><input type="color" id="ellipse-stroke-color" value="#333333"></td>
+                                </tr>
+                                <tr>
+                                    <td>Diamond</td>
+                                    <td><input type="number" id="diamond-width" value="100" min="30" max="300"></td>
+                                    <td><input type="number" id="diamond-height" value="40" min="20" max="200"></td>
+                                    <td><input type="color" id="diamond-fill-color" value="#ffffff"></td>
+                                    <td><input type="color" id="diamond-text-color" value="#000000"></td>
+                                    <td><input type="color" id="diamond-stroke-color" value="#333333"></td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
                 
