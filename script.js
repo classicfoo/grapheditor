@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
             { source: 'A', target: 'C', label: 'Edge 2' }
         ],
         settings: {
-            rankdir: 'LR',
+            rankdir: 'TB',
             nodesep: 50,
             ranksep: 50,
             nodeColor: '#ffffff',
@@ -362,6 +362,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .attr('class', 'edge-label')
             .attr('x', d => {
                 const points = d.points;
+                // Find the middle point of the path
                 const midIndex = Math.floor(points.length / 2);
                 return (points[midIndex-1].x + points[midIndex].x) / 2;
             })
@@ -370,7 +371,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 const midIndex = Math.floor(points.length / 2);
                 return (points[midIndex-1].y + points[midIndex].y) / 2;
             })
-            .attr('dy', -5)
+            .attr('dy', 0) // Remove the vertical offset
+            .attr('text-anchor', 'middle') // Center horizontally
+            .attr('dominant-baseline', 'middle') // Center vertically
+            .attr('fill', '#000')
             .text(d => d.label);
         
         // Add arrowhead marker
