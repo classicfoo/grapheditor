@@ -2,9 +2,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize app state
     let state = {
         nodes: [
-            { id: 'A', label: 'Node A', width: 100, height: 40, shape: 'rect' },
-            { id: 'B', label: 'Node B', width: 100, height: 40, shape: 'rect' },
-            { id: 'C', label: 'Node C', width: 100, height: 40, shape: 'rect' }
+            { id: 'A', label: 'Node A', shape: 'rect' },
+            { id: 'B', label: 'Node B', shape: 'rect' },
+            { id: 'C', label: 'Node C', shape: 'rect' }
         ],
         edges: [
             { source: 'A', target: 'B', label: 'Edge 1' },
@@ -21,6 +21,8 @@ document.addEventListener('DOMContentLoaded', function() {
             nodeTextColor: '#000000',
             nodeStrokeColor: '#333333',
             nodeStrokeWidth: 1.5,
+            nodeWidth: 100,
+            nodeHeight: 40,
             
             // Edge appearance
             edgeColor: '#333333',
@@ -48,6 +50,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     nodeTextColorInput.value = state.settings.nodeTextColor || '#000000';
                     nodeStrokeColorInput.value = state.settings.nodeStrokeColor || '#333333';
                     nodeStrokeWidthInput.value = state.settings.nodeStrokeWidth || 1.5;
+                    nodeWidthInput.value = state.settings.nodeWidth || 100;
+                    nodeHeightInput.value = state.settings.nodeHeight || 40;
                     
                     // Edge appearance
                     edgeColorInput.value = state.settings.edgeColor;
@@ -90,6 +94,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const nodeStrokeWidthInput = document.getElementById('node-stroke-width');
     const edgeTextColorInput = document.getElementById('edge-text-color');
     const edgeWidthInput = document.getElementById('edge-width');
+    const nodeWidthInput = document.getElementById('node-width');
+    const nodeHeightInput = document.getElementById('node-height');
 
     // Initialize tables
     function renderNodeTable() {
@@ -113,8 +119,6 @@ document.addEventListener('DOMContentLoaded', function() {
             row.innerHTML = `
                 <td><input type="text" class="node-id" value="${node.id}" data-index="${index}"></td>
                 <td><input type="text" class="node-label" value="${node.label}" data-index="${index}"></td>
-                <td><input type="number" class="node-width" value="${node.width}" min="30" max="300" data-index="${index}"></td>
-                <td><input type="number" class="node-height" value="${node.height}" min="20" max="200" data-index="${index}"></td>
                 <td>
                     <select class="node-shape" data-index="${index}">
                         ${shapeOptionsHTML}
@@ -150,24 +154,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 const index = parseInt(this.dataset.index);
                 state.nodes[index].label = this.value;
                 generateGraph(); // Regenerate graph when node label changes
-                saveToLocalStorage(); // Save changes to local storage
-            });
-        });
-
-        document.querySelectorAll('.node-width').forEach(input => {
-            input.addEventListener('change', function() {
-                const index = parseInt(this.dataset.index);
-                state.nodes[index].width = parseInt(this.value);
-                generateGraph(); // Regenerate graph when node width changes
-                saveToLocalStorage(); // Save changes to local storage
-            });
-        });
-
-        document.querySelectorAll('.node-height').forEach(input => {
-            input.addEventListener('change', function() {
-                const index = parseInt(this.dataset.index);
-                state.nodes[index].height = parseInt(this.value);
-                generateGraph(); // Regenerate graph when node height changes
                 saveToLocalStorage(); // Save changes to local storage
             });
         });
@@ -286,12 +272,10 @@ document.addEventListener('DOMContentLoaded', function() {
             newId = 'Node' + (parseInt(newId.replace('Node', '')) + 1);
         }
         
-        // Create the new node
+        // Create the new node (without width and height)
         state.nodes.push({
             id: newId,
             label: newId,
-            width: 100,
-            height: 40,
             shape: 'rect' // Default shape is rectangle
         });
         
@@ -453,46 +437,82 @@ document.addEventListener('DOMContentLoaded', function() {
         saveToLocalStorage();
     });
 
+    // Add event listeners for node size settings
+    nodeWidthInput.addEventListener('change', function() {
+        state.settings.nodeWidth = parseInt(this.value);
+        generateGraph();
+        saveToLocalStorage();
+    });
+
+    nodeHeightInput.addEventListener('change', function() {
+        state.settings.nodeHeight = parseInt(this.value);
+        generateGraph();
+        saveToLocalStorage();
+    });
+
     // Generate graph
     function generateGraph() {
-        // Create a new directed graph
-        const g = new dagre.graphlib.Graph();
-
-        // Set graph settings
-        g.setGraph({
-            rankdir: state.settings.rankdir,
-            nodesep: state.settings.nodesep,
-            ranksep: state.settings.ranksep,
-            marginx: 20,
-            marginy: 20
-        });
-
-        // Set default node and edge labels
-        g.setDefaultNodeLabel(() => ({}));
-        g.setDefaultEdgeLabel(() => ({}));
-
-        // Add nodes to the graph
-        state.nodes.forEach(node => {
-            g.setNode(node.id, {
-                label: node.label,
-                width: node.width,
-                height: node.height,
-                shape: node.shape
+        try {
+            // Create a new directed graph
+            const g = new dagre.graphlib.Graph().setGraph({
+                rankdir: state.settings.rankdir,
+                nodesep: state.settings.nodesep,
+                ranksep: state.settings.ranksep,
+                marginx: 20,
+                marginy: 20
+            }).setDefaultEdgeLabel(function() { return {}; });
+            
+            // Ensure node dimensions are valid (minimum values)
+            const nodeWidth = Math.max(30, state.settings.nodeWidth || 100);
+            const nodeHeight = Math.max(20, state.settings.nodeHeight || 40);
+            
+            // Add nodes to the graph with validated dimensions
+            state.nodes.forEach(node => {
+                g.setNode(node.id, {
+                    label: node.label,
+                    width: nodeWidth,
+                    height: nodeHeight,
+                    shape: node.shape
+                });
             });
-        });
-
-        // Add edges to the graph
-        state.edges.forEach(edge => {
-            g.setEdge(edge.source, edge.target, {
-                label: edge.label
+            
+            // Add edges to the graph
+            state.edges.forEach(edge => {
+                g.setEdge(edge.source, edge.target, {
+                    label: edge.label
+                });
             });
-        });
-
-        // Run the layout algorithm
-        dagre.layout(g);
-
-        // Render the graph
-        renderSvgGraph(g);
+            
+            // Run the layout algorithm with error handling
+            try {
+                dagre.layout(g);
+                // Render the graph
+                renderSvgGraph(g);
+            } catch (layoutError) {
+                console.error("Layout error:", layoutError);
+                // Try with simpler settings if layout fails
+                g.setGraph({
+                    rankdir: 'TB',
+                    nodesep: 50,
+                    ranksep: 50,
+                    marginx: 20,
+                    marginy: 20
+                });
+                
+                // Try layout again with simpler settings
+                try {
+                    dagre.layout(g);
+                    renderSvgGraph(g);
+                } catch (fallbackError) {
+                    console.error("Fallback layout also failed:", fallbackError);
+                    // Show error message to user
+                    alert("Unable to generate graph layout. Please check your graph structure.");
+                }
+            }
+        } catch (error) {
+            console.error("Graph generation error:", error);
+            alert("Error generating graph: " + error.message);
+        }
     }
 
     function renderSvgGraph(g) {
@@ -517,8 +537,8 @@ document.addEventListener('DOMContentLoaded', function() {
             .data(g.nodes().map(v => {
                 return { id: v, ...g.node(v) };
             }))
-            .enter()
-            .append('g')
+    .enter()
+    .append('g')
             .attr('class', 'node')
             .attr('transform', d => `translate(${d.x - d.width/2}, ${d.y - d.height/2})`);
         
@@ -566,13 +586,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         // Add text labels to nodes with node text color
-        nodes.append('text')
+nodes.append('text')
             .attr('x', d => d.width / 2)
             .attr('y', d => d.height / 2)
-            .attr('text-anchor', 'middle')
+    .attr('text-anchor', 'middle')
             .attr('dominant-baseline', 'middle')
             .attr('fill', state.settings.nodeTextColor)
-            .text(d => d.label);
+    .text(d => d.label);
 
         // Function to adjust edge endpoints based on node shape
         function adjustEdgeEndpoints(points, sourceNode, targetNode) {
@@ -860,12 +880,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     label: edgeData.label
                 };
             }))
-            .enter()
-            .append('g')
-            .attr('class', 'edge');
+    .enter()
+    .append('g')
+    .attr('class', 'edge');
 
-        edges.append('path')
-            .attr('d', d => {
+edges.append('path')
+    .attr('d', d => {
                 let path = '';
                 const points = d.points;
                 
@@ -894,7 +914,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return (points[midIndex-1].x + points[midIndex].x) / 2;
             })
             .attr('y', d => {
-                const points = d.points;
+        const points = d.points;
                 const midIndex = Math.floor(points.length / 2);
                 return (points[midIndex-1].y + points[midIndex].y) / 2;
             })
@@ -1063,4 +1083,4 @@ document.addEventListener('DOMContentLoaded', function() {
     renderEdgeTable();
     
     generateGraph(); // Generate graph on load
-});
+    });
