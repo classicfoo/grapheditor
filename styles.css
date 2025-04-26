@@ -170,4 +170,13 @@ input, select {
 
 #export-project:hover {
     background-color: #0b7dda;
+}
+
+.clear-btn {
+    background-color: #ff9800;
+    margin-left: auto;
+}
+
+.clear-btn:hover {
+    background-color: #e68a00;
 } 

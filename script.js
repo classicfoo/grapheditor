@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize app state
-    const state = {
+    let state = {
         nodes: [
             { id: 'A', label: 'Node A', width: 100, height: 40 },
             { id: 'B', label: 'Node B', width: 100, height: 40 },
@@ -18,6 +18,39 @@ document.addEventListener('DOMContentLoaded', function() {
             edgeColor: '#333333'
         }
     };
+
+    // Load state from local storage if available
+    function loadFromLocalStorage() {
+        const savedState = localStorage.getItem('graphEditorState');
+        if (savedState) {
+            try {
+                const parsedState = JSON.parse(savedState);
+                if (parsedState.nodes && parsedState.edges && parsedState.settings) {
+                    state = parsedState;
+                    
+                    // Update UI elements to reflect loaded settings
+                    rankdirSelect.value = state.settings.rankdir;
+                    nodesepInput.value = state.settings.nodesep;
+                    ranksepInput.value = state.settings.ranksep;
+                    nodeColorInput.value = state.settings.nodeColor;
+                    edgeColorInput.value = state.settings.edgeColor;
+                    
+                    console.log('State loaded from local storage');
+                }
+            } catch (error) {
+                console.error('Error loading state from local storage:', error);
+            }
+        }
+    }
+
+    // Save state to local storage
+    function saveToLocalStorage() {
+        try {
+            localStorage.setItem('graphEditorState', JSON.stringify(state));
+        } catch (error) {
+            console.error('Error saving to local storage:', error);
+        }
+    }
 
     // DOM elements
     const nodeTbody = document.getElementById('node-tbody');
@@ -65,6 +98,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 state.nodes[index].id = newId;
                 renderEdgeTable(); // Refresh edge table to show updated IDs
                 generateGraph(); // Regenerate graph when node ID changes
+                saveToLocalStorage(); // Save changes to local storage
             });
         });
 
@@ -73,6 +107,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const index = parseInt(this.dataset.index);
                 state.nodes[index].label = this.value;
                 generateGraph(); // Regenerate graph when node label changes
+                saveToLocalStorage(); // Save changes to local storage
             });
         });
 
@@ -81,6 +116,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const index = parseInt(this.dataset.index);
                 state.nodes[index].width = parseInt(this.value);
                 generateGraph(); // Regenerate graph when node width changes
+                saveToLocalStorage(); // Save changes to local storage
             });
         });
 
@@ -89,6 +125,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const index = parseInt(this.dataset.index);
                 state.nodes[index].height = parseInt(this.value);
                 generateGraph(); // Regenerate graph when node height changes
+                saveToLocalStorage(); // Save changes to local storage
             });
         });
 
@@ -108,6 +145,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 renderNodeTable();
                 renderEdgeTable();
                 generateGraph(); // Regenerate graph when node is deleted
+                saveToLocalStorage(); // Save changes to local storage
             });
         });
     }
@@ -154,6 +192,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const index = parseInt(this.dataset.index);
                 state.edges[index].source = this.value;
                 generateGraph(); // Regenerate graph when edge source changes
+                saveToLocalStorage(); // Save changes to local storage
             });
         });
 
@@ -162,6 +201,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const index = parseInt(this.dataset.index);
                 state.edges[index].target = this.value;
                 generateGraph(); // Regenerate graph when edge target changes
+                saveToLocalStorage(); // Save changes to local storage
             });
         });
 
@@ -170,6 +210,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const index = parseInt(this.dataset.index);
                 state.edges[index].label = this.value;
                 generateGraph(); // Regenerate graph when edge label changes
+                saveToLocalStorage(); // Save changes to local storage
             });
         });
 
@@ -179,6 +220,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 state.edges.splice(index, 1);
                 renderEdgeTable();
                 generateGraph(); // Regenerate graph when edge is deleted
+                saveToLocalStorage(); // Save changes to local storage
             });
         });
     }
@@ -201,6 +243,7 @@ document.addEventListener('DOMContentLoaded', function() {
         renderNodeTable();
         renderEdgeTable();
         generateGraph(); // Regenerate graph when new node is added
+        saveToLocalStorage(); // Save changes to local storage
     });
 
     // Add new edge
@@ -218,32 +261,38 @@ document.addEventListener('DOMContentLoaded', function() {
         
         renderEdgeTable();
         generateGraph(); // Regenerate graph when new edge is added
+        saveToLocalStorage(); // Save changes to local storage
     });
 
     // Update settings
     rankdirSelect.addEventListener('change', function() {
         state.settings.rankdir = this.value;
         generateGraph(); // Regenerate graph when direction changes
+        saveToLocalStorage(); // Save changes to local storage
     });
 
     nodesepInput.addEventListener('change', function() {
         state.settings.nodesep = parseInt(this.value);
         generateGraph(); // Regenerate graph when node separation changes
+        saveToLocalStorage(); // Save changes to local storage
     });
 
     ranksepInput.addEventListener('change', function() {
         state.settings.ranksep = parseInt(this.value);
         generateGraph(); // Regenerate graph when rank separation changes
+        saveToLocalStorage(); // Save changes to local storage
     });
 
     nodeColorInput.addEventListener('change', function() {
         state.settings.nodeColor = this.value;
         generateGraph(); // Regenerate graph when node color changes
+        saveToLocalStorage(); // Save changes to local storage
     });
 
     edgeColorInput.addEventListener('change', function() {
         state.settings.edgeColor = this.value;
         generateGraph(); // Regenerate graph when edge color changes
+        saveToLocalStorage(); // Save changes to local storage
     });
 
     // Generate graph
@@ -500,6 +549,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 renderNodeTable();
                 renderEdgeTable();
                 generateGraph();
+                saveToLocalStorage(); // Save imported project to local storage
                 
                 alert('Project imported successfully!');
             } catch (error) {
@@ -513,7 +563,21 @@ document.addEventListener('DOMContentLoaded', function() {
         reader.readAsText(file);
     });
 
+    // Add a clear local storage button (optional)
+    const clearStorageBtn = document.createElement('button');
+    clearStorageBtn.textContent = 'Clear Saved Data';
+    clearStorageBtn.id = 'clear-storage';
+    clearStorageBtn.className = 'clear-btn';
+    clearStorageBtn.addEventListener('click', function() {
+        if (confirm('Are you sure you want to clear all saved data? This cannot be undone.')) {
+            localStorage.removeItem('graphEditorState');
+            location.reload();
+        }
+    });
+    document.querySelector('.actions').appendChild(clearStorageBtn);
+
     // Initialize the app
+    loadFromLocalStorage(); // Load state from local storage
     renderNodeTable();
     renderEdgeTable();
     
