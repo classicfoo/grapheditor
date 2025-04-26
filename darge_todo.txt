@@ -1,0 +1,5 @@
+shape border colour
+text colour
+
+add shape fill colour to settings (each type of shape will have a different colour)
+add tooltips to show node ids and label text

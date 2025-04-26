@@ -196,4 +196,47 @@ input, select {
     color: #555;
     border-bottom: 1px solid #ddd;
     padding-bottom: 5px;
+}
+
+/* Tooltip styles */
+.table-input {
+    position: relative;
+    width: 100%;
+}
+
+.table-input:hover::after {
+    content: attr(title);
+    position: absolute;
+    left: 0;
+    top: 100%;
+    z-index: 1000;
+    background-color: #333;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    white-space: nowrap;
+    font-size: 14px;
+    pointer-events: none;
+    opacity: 0.9;
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* Custom tooltip styles */
+.custom-tooltip {
+    position: absolute;
+    z-index: 1000;
+    background-color: #333;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 14px;
+    pointer-events: none;
+    opacity: 0.9;
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 } 

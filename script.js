@@ -117,10 +117,10 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             row.innerHTML = `
-                <td><input type="text" class="node-id" value="${node.id}" data-index="${index}"></td>
-                <td><input type="text" class="node-label" value="${node.label}" data-index="${index}"></td>
+                <td><input type="text" class="node-id table-input" value="${node.id}" data-index="${index}" title="${node.id}"></td>
+                <td><input type="text" class="node-label table-input" value="${node.label}" data-index="${index}" title="${node.label}"></td>
                 <td>
-                    <select class="node-shape" data-index="${index}">
+                    <select class="node-shape table-input" data-index="${index}" title="${shapeOptions.find(opt => opt.value === node.shape)?.label || 'Rectangle'}">
                         ${shapeOptionsHTML}
                     </select>
                 </td>
@@ -134,16 +134,32 @@ document.addEventListener('DOMContentLoaded', function() {
             input.addEventListener('change', function() {
                 const index = parseInt(this.dataset.index);
                 const oldId = state.nodes[index].id;
-                const newId = this.value;
+                const newId = this.value.trim();
+                
+                // Check if ID is unique
+                if (state.nodes.some((node, i) => i !== index && node.id === newId)) {
+                    alert('Node ID must be unique!');
+                    this.value = oldId;
+                    return;
+                }
+                
+                // Update node ID
+                state.nodes[index].id = newId;
                 
                 // Update edges that reference this node
                 state.edges.forEach(edge => {
-                    if (edge.source === oldId) edge.source = newId;
-                    if (edge.target === oldId) edge.target = newId;
+                    if (edge.source === oldId) {
+                        edge.source = newId;
+                    }
+                    if (edge.target === oldId) {
+                        edge.target = newId;
+                    }
                 });
                 
-                state.nodes[index].id = newId;
-                renderEdgeTable(); // Refresh edge table to show updated IDs
+                // Update title attribute for tooltip
+                this.title = newId;
+                
+                renderEdgeTable(); // Update edge dropdowns
                 generateGraph(); // Regenerate graph when node ID changes
                 saveToLocalStorage(); // Save changes to local storage
             });
@@ -153,6 +169,10 @@ document.addEventListener('DOMContentLoaded', function() {
             input.addEventListener('change', function() {
                 const index = parseInt(this.dataset.index);
                 state.nodes[index].label = this.value;
+                
+                // Update title attribute for tooltip
+                this.title = this.value;
+                
                 generateGraph(); // Regenerate graph when node label changes
                 saveToLocalStorage(); // Save changes to local storage
             });
@@ -163,6 +183,11 @@ document.addEventListener('DOMContentLoaded', function() {
             select.addEventListener('change', function() {
                 const index = parseInt(this.dataset.index);
                 state.nodes[index].shape = this.value;
+                
+                // Update title attribute for tooltip
+                const selectedOption = select.options[select.selectedIndex];
+                this.title = selectedOption.textContent;
+                
                 generateGraph(); // Regenerate graph when node shape changes
                 saveToLocalStorage(); // Save changes to local storage
             });
@@ -187,6 +212,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 saveToLocalStorage(); // Save changes to local storage
             });
         });
+
+        // Add mouseover event listeners for tooltips
+        document.querySelectorAll('.node-id').forEach(input => {
+            input.addEventListener('mouseover', function() {
+                createTooltip(this, this.value, 'ID');
+            });
+        });
+
+        document.querySelectorAll('.node-label').forEach(input => {
+            input.addEventListener('mouseover', function() {
+                createTooltip(this, this.value, 'Label');
+            });
+        });
+
+        document.querySelectorAll('.node-shape').forEach(select => {
+            select.addEventListener('mouseover', function() {
+                const shapeText = this.options[this.selectedIndex].text;
+                createTooltip(this, shapeText, 'Shape');
+            });
+        });
     }
 
     function renderEdgeTable() {
@@ -194,32 +239,36 @@ document.addEventListener('DOMContentLoaded', function() {
         state.edges.forEach((edge, index) => {
             const row = document.createElement('tr');
             
-            // Create source dropdown
-            let sourceOptions = '';
+            // Create source node dropdown options
+            let sourceOptionsHTML = '';
             state.nodes.forEach(node => {
-                const selected = node.id === edge.source ? 'selected' : '';
-                sourceOptions += `<option value="${node.id}" ${selected}>${node.id}</option>`;
+                const selected = edge.source === node.id ? 'selected' : '';
+                sourceOptionsHTML += `<option value="${node.id}" ${selected}>${node.id}</option>`;
             });
             
-            // Create target dropdown
-            let targetOptions = '';
+            // Create target node dropdown options
+            let targetOptionsHTML = '';
             state.nodes.forEach(node => {
-                const selected = node.id === edge.target ? 'selected' : '';
-                targetOptions += `<option value="${node.id}" ${selected}>${node.id}</option>`;
+                const selected = edge.target === node.id ? 'selected' : '';
+                targetOptionsHTML += `<option value="${node.id}" ${selected}>${node.id}</option>`;
             });
+            
+            // Find source and target node objects for tooltips
+            const sourceNode = state.nodes.find(node => node.id === edge.source);
+            const targetNode = state.nodes.find(node => node.id === edge.target);
             
             row.innerHTML = `
                 <td>
-                    <select class="edge-source" data-index="${index}">
-                        ${sourceOptions}
+                    <select class="edge-source table-input" data-index="${index}" title="Source: ${sourceNode ? sourceNode.label : edge.source}">
+                        ${sourceOptionsHTML}
                     </select>
                 </td>
                 <td>
-                    <select class="edge-target" data-index="${index}">
-                        ${targetOptions}
+                    <select class="edge-target table-input" data-index="${index}" title="Target: ${targetNode ? targetNode.label : edge.target}">
+                        ${targetOptionsHTML}
                     </select>
                 </td>
-                <td><input type="text" class="edge-label" value="${edge.label || ''}" data-index="${index}"></td>
+                <td><input type="text" class="edge-label table-input" value="${edge.label}" data-index="${index}" title="${edge.label}"></td>
                 <td><button class="delete-btn delete-edge" data-index="${index}">Delete</button></td>
             `;
             edgeTbody.appendChild(row);
@@ -230,6 +279,11 @@ document.addEventListener('DOMContentLoaded', function() {
             select.addEventListener('change', function() {
                 const index = parseInt(this.dataset.index);
                 state.edges[index].source = this.value;
+                
+                // Update title attribute for tooltip
+                const sourceNode = state.nodes.find(node => node.id === this.value);
+                this.title = `Source: ${sourceNode ? sourceNode.label : this.value}`;
+                
                 generateGraph(); // Regenerate graph when edge source changes
                 saveToLocalStorage(); // Save changes to local storage
             });
@@ -239,6 +293,11 @@ document.addEventListener('DOMContentLoaded', function() {
             select.addEventListener('change', function() {
                 const index = parseInt(this.dataset.index);
                 state.edges[index].target = this.value;
+                
+                // Update title attribute for tooltip
+                const targetNode = state.nodes.find(node => node.id === this.value);
+                this.title = `Target: ${targetNode ? targetNode.label : this.value}`;
+                
                 generateGraph(); // Regenerate graph when edge target changes
                 saveToLocalStorage(); // Save changes to local storage
             });
@@ -248,6 +307,10 @@ document.addEventListener('DOMContentLoaded', function() {
             input.addEventListener('change', function() {
                 const index = parseInt(this.dataset.index);
                 state.edges[index].label = this.value;
+                
+                // Update title attribute for tooltip
+                this.title = this.value;
+                
                 generateGraph(); // Regenerate graph when edge label changes
                 saveToLocalStorage(); // Save changes to local storage
             });
@@ -260,6 +323,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 renderEdgeTable();
                 generateGraph(); // Regenerate graph when edge is deleted
                 saveToLocalStorage(); // Save changes to local storage
+            });
+        });
+
+        // Add mouseover event listeners for tooltips
+        document.querySelectorAll('.edge-source').forEach(select => {
+            select.addEventListener('mouseover', function() {
+                const sourceId = this.value;
+                const sourceNode = state.nodes.find(node => node.id === sourceId);
+                const tooltipText = `Source: ${sourceNode ? sourceNode.label : sourceId}`;
+                createTooltip(this, tooltipText);
+            });
+        });
+
+        document.querySelectorAll('.edge-target').forEach(select => {
+            select.addEventListener('mouseover', function() {
+                const targetId = this.value;
+                const targetNode = state.nodes.find(node => node.id === targetId);
+                const tooltipText = `Target: ${targetNode ? targetNode.label : targetId}`;
+                createTooltip(this, tooltipText);
+            });
+        });
+
+        document.querySelectorAll('.edge-label').forEach(input => {
+            input.addEventListener('mouseover', function() {
+                createTooltip(this, this.value, 'Label');
             });
         });
     }
@@ -475,8 +563,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     shape: node.shape
                 });
             });
-            
-            // Add edges to the graph
+
+// Add edges to the graph
             state.edges.forEach(edge => {
                 g.setEdge(edge.source, edge.target, {
                     label: edge.label
@@ -501,7 +589,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Try layout again with simpler settings
                 try {
-                    dagre.layout(g);
+dagre.layout(g);
                     renderSvgGraph(g);
                 } catch (fallbackError) {
                     console.error("Fallback layout also failed:", fallbackError);
@@ -528,7 +616,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Set SVG dimensions with some padding
         svg.attr('viewBox', `0 0 ${graphWidth + 40} ${graphHeight + 40}`);
 
-        // Create a group for the graph
+// Create a group for the graph
         const svgGroup = svg.append('g')
             .attr('transform', 'translate(20, 20)');
         
@@ -1084,3 +1172,38 @@ edges.append('path')
     
     generateGraph(); // Generate graph on load
     });
+
+// Add a function to create and show tooltips
+function createTooltip(element, text, header = null) {
+    // Don't show tooltip for empty values
+    if (!text || text.trim() === '') {
+        text = '(empty)';
+    }
+    
+    // Add header if provided
+    if (header) {
+        text = `${header}: ${text}`;
+    }
+    
+    // Remove any existing tooltip
+    const existingTooltip = document.querySelector('.custom-tooltip');
+    if (existingTooltip) {
+        existingTooltip.remove();
+    }
+    
+    // Create tooltip element
+    const tooltip = document.createElement('div');
+    tooltip.className = 'custom-tooltip';
+    tooltip.textContent = text;
+    document.body.appendChild(tooltip);
+    
+    // Position the tooltip
+    const rect = element.getBoundingClientRect();
+    tooltip.style.left = rect.left + 'px';
+    tooltip.style.top = (rect.bottom + 5) + 'px';
+    
+    // Add event listener to remove tooltip
+    element.addEventListener('mouseleave', function() {
+        tooltip.remove();
+    });
+}
